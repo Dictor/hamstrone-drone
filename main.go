@@ -42,20 +42,20 @@ func main() {
 	}
 	port, err := serial.Open(options)
 	if err != nil {
-		globalLogger.WithField("error", err).Panicln("fail to open serial port : %s")
+		globalLogger.WithField("error", err).Panicln("fail to open serial port")
 	}
 	defer port.Close()
+	globalLogger.Infoln("serial port opened")
 
 	msgResult := make(chan *hamsterTongueMessage)
 	go listenPort(port, 256, msgResult)
-	go func() {
-		for {
-			select {
-			case msg := <-msgResult:
-				globalLogger.Info(msg)
-			}
+
+	for {
+		select {
+		case msg := <-msgResult:
+			globalLogger.Infof("message income : %#v", msg)
 		}
-	}()
+	}
 }
 
 func listenPort(stream io.ReadWriteCloser, bufferSize int, result chan *hamsterTongueMessage) {
@@ -63,30 +63,32 @@ func listenPort(stream io.ReadWriteCloser, bufferSize int, result chan *hamsterT
 	var (
 		markerFound bool
 		appendCount byte
-		message     hamsterTongueMessage = hamsterTongueMessage{Payload: []byte{}}
+		message     *hamsterTongueMessage = &hamsterTongueMessage{Payload: []byte{}}
 	)
 	for {
 		readCount, err := stream.Read(buffer)
 		if readCount > 0 {
 			for _, b := range buffer[0:readCount] {
 				if markerFound {
+					appendCount++
 					switch appendCount {
-					case 0:
-						message.Length = b
 					case 1:
-						message.Verb = b
+						message.Length = b
 					case 2:
+						message.Verb = b
+					case 3:
 						message.Noun = b
 					default:
-						if appendCount < message.Length {
+						if appendCount <= message.Length {
 							message.Payload = append(message.Payload, b)
 						} else {
 							message.CRC = b
-							result <- &message
-							message = hamsterTongueMessage{Payload: []byte{}}
+							result <- message
+							message = &hamsterTongueMessage{Payload: []byte{}}
+							markerFound = false
+							appendCount = 0
 						}
 					}
-					appendCount++
 				} else {
 					if b == 0xFF {
 						markerFound = true
@@ -96,7 +98,7 @@ func listenPort(stream io.ReadWriteCloser, bufferSize int, result chan *hamsterT
 		}
 		if err != nil {
 			globalLogger.WithField("error", err).Errorln("encounter error while read serial port")
-			break
+			return
 		}
 	}
 }
