@@ -1,19 +1,18 @@
 #include "hamstrone.h"
 
 HAL_StatusTypeDef HAMSTRONE_MessageTransmit(UART_HandleTypeDef* huart, HAMSTRONE_Message* msg, uint32_t timeout){
-	int payloadLen = sizeof(msg->Payload) / sizeof(uint8_t);
-	uint8_t* payload = malloc(sizeof(uint8_t) * (4 + payloadLen));
-	payload[0] = HAMSTRONE_MESSAGE_MARKER;
-	payload[1] = 4 + payloadLen;
-	payload[2] = msg->Verb;
-	payload[3] = msg->Noun;
-	for (int i = 0; i < payloadLen; i++) {
-		payload[4+i] = msg->Payload[i];
+	int payloadLen = sizeof(msg->Payload);
+	int bodySize = (5 + msg->PayloadLength) * sizeof(uint8_t);
+	uint8_t* body = malloc(bodySize);
+	body[0] = HAMSTRONE_MESSAGE_MARKER;
+	body[1] = 3 + msg->PayloadLength;
+	body[2] = msg->Verb;
+	body[3] = msg->Noun;
+	for (int i = 0; i < msg->PayloadLength; i++) {
+		body[4+i] = msg->Payload[i];
 	}
-	payload[(4 + payloadLen)-1] = 0; //CRC
-	HAL_StatusTypeDef res = HAL_UART_Transmit(huart, payload, 4 + payloadLen, timeout);
-	free(payload);
+	body[4 + msg->PayloadLength] = 0; //CRC
+	HAL_StatusTypeDef res = HAL_UART_Transmit(huart, body, bodySize, timeout);
+	free(body);
 	return res;
 }
-
-
