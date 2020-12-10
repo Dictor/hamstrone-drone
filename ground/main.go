@@ -8,6 +8,8 @@ import (
 	ws "github.com/dictor/wswrapper"
 	"github.com/jacobsa/go-serial/serial"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/gommon/log"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -27,16 +29,26 @@ type (
 func main() {
 	e := echo.New()
 	globalLogger = elogrus.Attach(e)
+	globalLogger.SetFormatter(&logrus.TextFormatter{
+		ForceColors: true,
+	})
 
 	var (
 		serialPort, webListenAddress, valueConfig string
 		serialBaud                                int
+		debug                                     bool
 	)
 	flag.StringVar(&serialPort, "sport", "", "path of serial port")
 	flag.IntVar(&serialBaud, "sbaud", 115200, "baudrate of serial port")
 	flag.StringVar(&webListenAddress, "waddr", ":80", "web server listen address")
 	flag.StringVar(&valueConfig, "vconf", "value.json", "path of value key-id config file")
+	flag.BoolVar(&debug, "debug", false, "enable debug log output")
 	flag.Parse()
+
+	if debug {
+		globalLogger.SetLevel(log.DEBUG)
+		globalLogger.Debugln("debug log enabled")
+	}
 
 	if err := ReadValueData(valueConfig); err != nil {
 		globalLogger.WithField("error", err).Panicln("fail to read value config file")

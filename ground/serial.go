@@ -4,6 +4,8 @@ import (
 	"encoding/binary"
 	"io"
 	"strconv"
+
+	"github.com/sirupsen/logrus"
 )
 
 func listenPort(stream io.ReadWriteCloser, bufferSize int, result chan *hamsterTongueMessage) {
@@ -55,12 +57,32 @@ func decodeMessage(msgchan chan *hamsterTongueMessage) {
 	for {
 		select {
 		case msg := <-msgchan:
-			globalLogger.Debugf("message income : %#v", msg)
+			globalLogger.WithFields(logrus.Fields{
+				"length":  msg.Length,
+				"verb":    msg.Verb,
+				"noun":    msg.Noun,
+				"payload": msg.Payload,
+			}).Debugf("serial message income")
 			switch msg.Verb {
 			case 0: //Heartbeat
 			case 1: //Value
-				Value[strconv.Itoa(int(msg.Noun))] = binary.LittleEndian.Uint32(msg.Payload)
+				Value[strconv.Itoa(int(msg.Noun))] = binary.LittleEndian.Uint32(addArrayPadding(msg.Payload, 4))
 			}
 		}
 	}
+}
+
+func addArrayPadding(b []byte, minimumLength int) []byte {
+	if len(b) >= minimumLength {
+		return b
+	}
+	nb := make([]byte, minimumLength)
+	for i := 0; i < minimumLength; i++ {
+		if i < len(b) {
+			nb[i] = b[i]
+		} else {
+			nb[i] = 0
+		}
+	}
+	return nb
 }

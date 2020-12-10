@@ -104,7 +104,8 @@ int main(void)
 	  msg.Noun = 0;
 	  uint8_t runtime[1] = {i};
 	  msg.Payload = &runtime;
-	  HAMSTRONE_MessageTransmit(&huart2, &msg, 1000);
+	  msg.PayloadLength = 1;
+	  HAMSTRONE_MessageTransmit(&huart2, &msg, 100);
 	  HAL_Delay(1000);
 	  i++;
     /* USER CODE BEGIN 3 */
