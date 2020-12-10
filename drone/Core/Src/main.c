@@ -19,7 +19,6 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "hamstrone.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -95,16 +94,17 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  int i = 0;
+  uint32_t i = 0;
+
   while (1)
   {
     /* USER CODE END WHILE */
 	  HAMSTRONE_Message msg;
 	  msg.Verb = 1;
 	  msg.Noun = 0;
-	  uint8_t runtime[1] = {i};
-	  msg.Payload = &runtime;
-	  msg.PayloadLength = 1;
+	  msg.Payload = malloc(sizeof(i));
+	  serialize32(i, msg.Payload, 0);
+	  msg.PayloadLength = sizeof(i);
 	  HAMSTRONE_MessageTransmit(&huart2, &msg, 100);
 	  HAL_Delay(1000);
 	  i++;
@@ -113,6 +113,12 @@ int main(void)
   /* USER CODE END 3 */
 }
 
+void serialize32(uint32_t i, uint8_t* buf, int starti) {
+	*(buf + starti) = i & 0xff;
+	*(buf + starti + 1) = (i >> 8) & 0xff;
+	*(buf + starti + 2) = (i >> 16) & 0xff;
+	*(buf + starti + 3) = (i >> 24) & 0xff;
+}
 /**
   * @brief System Clock Configuration
   * @retval None

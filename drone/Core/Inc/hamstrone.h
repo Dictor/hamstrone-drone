@@ -2,6 +2,8 @@
 #define HAMSTRONE_H
 
 #include "stm32l4xx_hal.h"
+#include <string.h>
+#include <stdlib.h>
 
 #define HAMSTRONE_MESSAGE_MARKER 0xFF
 
