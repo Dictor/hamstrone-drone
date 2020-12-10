@@ -2,14 +2,16 @@ package main
 
 import (
 	"flag"
-	"io"
+	"net/http"
 
+	elogrus "github.com/dictor/echologrus"
+	ws "github.com/dictor/wswrapper"
 	"github.com/jacobsa/go-serial/serial"
-	logrus "github.com/sirupsen/logrus"
+	"github.com/labstack/echo/v4"
 )
 
 var (
-	globalLogger *logrus.Logger
+	globalLogger elogrus.EchoLogger
 )
 
 type (
@@ -23,15 +25,22 @@ type (
 )
 
 func main() {
-	globalLogger = logrus.New()
+	e := echo.New()
+	globalLogger = elogrus.Attach(e)
 
 	var (
-		serialPort string
-		serialBaud int
+		serialPort, webListenAddress, valueConfig string
+		serialBaud                                int
 	)
 	flag.StringVar(&serialPort, "sport", "", "path of serial port")
 	flag.IntVar(&serialBaud, "sbaud", 115200, "baudrate of serial port")
+	flag.StringVar(&webListenAddress, "waddr", ":80", "web server listen address")
+	flag.StringVar(&valueConfig, "vconf", "value.json", "path of value key-id config file")
 	flag.Parse()
+
+	if err := ReadValueData(valueConfig); err != nil {
+		globalLogger.WithField("error", err).Panicln("fail to read value config file")
+	}
 
 	options := serial.OpenOptions{
 		PortName:        serialPort,
@@ -49,56 +58,21 @@ func main() {
 
 	msgResult := make(chan *hamsterTongueMessage)
 	go listenPort(port, 256, msgResult)
+	go decodeMessage(msgResult)
 
-	for {
-		select {
-		case msg := <-msgResult:
-			globalLogger.Infof("message income : %#v", msg)
-		}
-	}
-}
+	wshub := ws.NewHub()
+	go wshub.Run(wsEvent)
+	go broadcastValue(wshub, 200)
 
-func listenPort(stream io.ReadWriteCloser, bufferSize int, result chan *hamsterTongueMessage) {
-	buffer := make([]byte, bufferSize)
-	var (
-		markerFound bool
-		appendCount byte
-		message     *hamsterTongueMessage = &hamsterTongueMessage{Payload: []byte{}}
-	)
-	for {
-		readCount, err := stream.Read(buffer)
-		if readCount > 0 {
-			for _, b := range buffer[0:readCount] {
-				if markerFound {
-					appendCount++
-					switch appendCount {
-					case 1:
-						message.Length = b
-					case 2:
-						message.Verb = b
-					case 3:
-						message.Noun = b
-					default:
-						if appendCount <= message.Length {
-							message.Payload = append(message.Payload, b)
-						} else {
-							message.CRC = b
-							result <- message
-							message = &hamsterTongueMessage{Payload: []byte{}}
-							markerFound = false
-							appendCount = 0
-						}
-					}
-				} else {
-					if b == 0xFF {
-						markerFound = true
-					}
-				}
-			}
-		}
-		if err != nil {
-			globalLogger.WithField("error", err).Errorln("encounter error while read serial port")
-			return
-		}
-	}
+	e.GET("/ws", func(c echo.Context) error {
+		wshub.AddClient(c.Response().Writer, c.Request())
+		return nil
+	})
+	e.GET("/definition/value", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, ValueIDToKey)
+	})
+	e.File("/", "ui/index.html")
+	e.File("/style", "ui/style.css")
+	e.File("/script", "ui/script.js")
+	globalLogger.Panic(e.Start(webListenAddress))
 }

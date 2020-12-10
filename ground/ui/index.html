@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+    <script src="https://use.fontawesome.com/releases/v5.2.0/js/all.js"></script>
+    <link rel="stylesheet" href="./style">
+    <script src="./script"></script>
+    <title>hamstrone-ground</title>
+</head>
+
+<body onload="HamstroneApp.init()">
+    <div id="app">
+        <div class="menu">
+            <span class="menu-title">Hamstrone Ground</span>
+        </div>
+        <div class="content">
+            <div class="value" v-for="(v, i) in values" :id="i">
+                <span class="value-key">{{valuekeys[v.name] ? valuekeys[v.name] : v.name}}</span>
+                <span class="value-value">{{v.value}}</span>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

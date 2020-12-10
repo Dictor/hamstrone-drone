@@ -1,0 +1,23 @@
+body {
+    font-family: Consolas;
+}
+
+.menu-title {
+    font-size: 2rem;
+    color: cornflowerblue;
+}
+
+.content {
+    padding: 20px 0px;
+    display: flex;
+    flex-direction: column;
+}
+
+.value {
+    width: 50%;
+    box-sizing: border-box;
+}
+
+.value>.value-value {
+    float: right;
+}

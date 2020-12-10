@@ -19,6 +19,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "hamstrone.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -94,10 +95,18 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  int i = 0;
   while (1)
   {
     /* USER CODE END WHILE */
-
+	  HAMSTRONE_Message msg;
+	  msg.Verb = 1;
+	  msg.Noun = 0;
+	  uint8_t runtime[1] = {i};
+	  msg.Payload = &runtime;
+	  HAMSTRONE_MessageTransmit(&huart2, &msg, 1000);
+	  HAL_Delay(1000);
+	  i++;
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
