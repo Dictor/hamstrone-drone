@@ -1,0 +1,1 @@
+{ "alarm", 100, 2048, alarm_main },

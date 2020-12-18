@@ -1,0 +1,161 @@
+libxx_cxa_atexit.o: \
+	libxx_cxa_atexit.cxx \
+	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/config.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/cxx/cassert \
+	/cygdrive/e/hamstrone/nuttx/os/include/assert.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/compiler.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/stdint.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/arch/types.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/arch/inttypes.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/limits.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/arch/limits.h \
+	libxx.hxx \
+	/cygdrive/e/hamstrone/nuttx/os/include/cxx/cstdlib \
+	/cygdrive/e/hamstrone/nuttx/os/include/stdlib.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/sys/types.h
+
+libxx_eabi_atexit.o: \
+	libxx_eabi_atexit.cxx \
+	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/config.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/cxx/cstdlib \
+	/cygdrive/e/hamstrone/nuttx/os/include/stdlib.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/compiler.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/sys/types.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/stdint.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/arch/types.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/arch/inttypes.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/limits.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/arch/limits.h \
+	libxx.hxx
+
+libxx_cxa_guard.o: \
+	libxx_cxa_guard.cxx \
+	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/compiler.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/config.h
+
+libxx_cxapurevirtual.o: \
+	libxx_cxapurevirtual.cxx \
+	/cygdrive/e/hamstrone/nuttx/os/include/cxx/cassert \
+	/cygdrive/e/hamstrone/nuttx/os/include/assert.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/compiler.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/config.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/stdint.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/arch/types.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/arch/inttypes.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/limits.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/arch/limits.h
+
+libxx_delete.o: \
+	libxx_delete.cxx \
+	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/config.h \
+	libxx.hxx \
+	/cygdrive/e/hamstrone/nuttx/os/include/cxx/cstdlib \
+	/cygdrive/e/hamstrone/nuttx/os/include/stdlib.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/compiler.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/sys/types.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/stdint.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/arch/types.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/arch/inttypes.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/limits.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/arch/limits.h
+
+libxx_delete_sized.o: \
+	libxx_delete_sized.cxx \
+	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/compiler.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/config.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/cxx/cstddef \
+	/cygdrive/e/hamstrone/nuttx/os/include/stddef.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/sys/types.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/stdint.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/arch/types.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/arch/inttypes.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/limits.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/arch/limits.h \
+	libxx.hxx \
+	/cygdrive/e/hamstrone/nuttx/os/include/cxx/cstdlib \
+	/cygdrive/e/hamstrone/nuttx/os/include/stdlib.h
+
+libxx_deletea.o: \
+	libxx_deletea.cxx \
+	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/config.h \
+	libxx.hxx \
+	/cygdrive/e/hamstrone/nuttx/os/include/cxx/cstdlib \
+	/cygdrive/e/hamstrone/nuttx/os/include/stdlib.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/compiler.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/sys/types.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/stdint.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/arch/types.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/arch/inttypes.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/limits.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/arch/limits.h
+
+libxx_deletea_sized.o: \
+	libxx_deletea_sized.cxx \
+	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/config.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/compiler.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/cxx/cstddef \
+	/cygdrive/e/hamstrone/nuttx/os/include/stddef.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/sys/types.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/stdint.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/arch/types.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/arch/inttypes.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/limits.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/arch/limits.h \
+	libxx.hxx \
+	/cygdrive/e/hamstrone/nuttx/os/include/cxx/cstdlib \
+	/cygdrive/e/hamstrone/nuttx/os/include/stdlib.h
+
+libxx_new.o: \
+	libxx_new.cxx \
+	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/config.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/cxx/cstddef \
+	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/compiler.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/stddef.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/sys/types.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/stdint.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/arch/types.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/arch/inttypes.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/limits.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/arch/limits.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/debug.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/syslog.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/stdbool.h \
+	libxx.hxx \
+	/cygdrive/e/hamstrone/nuttx/os/include/cxx/cstdlib \
+	/cygdrive/e/hamstrone/nuttx/os/include/stdlib.h
+
+libxx_newa.o: \
+	libxx_newa.cxx \
+	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/config.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/cxx/cstddef \
+	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/compiler.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/stddef.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/sys/types.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/stdint.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/arch/types.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/arch/inttypes.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/limits.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/arch/limits.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/debug.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/syslog.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/stdbool.h \
+	libxx.hxx \
+	/cygdrive/e/hamstrone/nuttx/os/include/cxx/cstdlib \
+	/cygdrive/e/hamstrone/nuttx/os/include/stdlib.h
+
+libxx_stdthrow.o: \
+	libxx_stdthrow.cxx \
+	/cygdrive/e/hamstrone/nuttx/os/include/cxx/cstdlib \
+	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/config.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/stdlib.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/compiler.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/sys/types.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/stdint.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/arch/types.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/arch/inttypes.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/limits.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/arch/limits.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/debug.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/syslog.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/stdbool.h
+

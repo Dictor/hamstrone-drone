@@ -1,0 +1,3 @@
+dummy.cygdrive.e.hamstrone.nuttx.apps.platform.o: \
+	board/dummy.c
+
