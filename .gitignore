@@ -2,3 +2,9 @@ drone/Debug
 *Debug.launch
 *.exe
 hamstrone_ground
+.depend
+*.o
+*.exe
+*.hex
+*.a
+*.so
