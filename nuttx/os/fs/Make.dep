@@ -1551,6 +1551,7 @@ fs_ioctl.o: \
 	/cygdrive/e/hamstrone/nuttx/os/include/arch/inttypes.h \
 	/cygdrive/e/hamstrone/nuttx/os/include/limits.h \
 	/cygdrive/e/hamstrone/nuttx/os/include/arch/limits.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/input/ioctl.h \
 	/cygdrive/e/hamstrone/nuttx/os/include/sched.h \
 	/cygdrive/e/hamstrone/nuttx/os/include/sys/types.h \
 	/cygdrive/e/hamstrone/nuttx/os/include/stdbool.h \
@@ -3675,6 +3676,7 @@ fs_mmap.o: \
 	/cygdrive/e/hamstrone/nuttx/os/include/sys/ioctl.h \
 	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/fs/ioctl.h \
 	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/serial/tioctl.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/input/ioctl.h \
 	/cygdrive/e/hamstrone/nuttx/os/include/errno.h \
 	/cygdrive/e/hamstrone/nuttx/os/include/debug.h \
 	/cygdrive/e/hamstrone/nuttx/os/include/syslog.h \

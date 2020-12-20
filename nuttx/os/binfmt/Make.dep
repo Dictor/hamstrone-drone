@@ -613,6 +613,7 @@ builtin.o: \
 	/cygdrive/e/hamstrone/nuttx/os/include/sys/ioctl.h \
 	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/fs/ioctl.h \
 	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/serial/tioctl.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/input/ioctl.h \
 	/cygdrive/e/hamstrone/nuttx/os/include/string.h \
 	/cygdrive/e/hamstrone/nuttx/os/include/stddef.h \
 	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/b2c.h \

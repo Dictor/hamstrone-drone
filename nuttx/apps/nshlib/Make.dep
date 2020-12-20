@@ -726,6 +726,7 @@ nsh_syscmds.cygdrive.e.hamstrone.nuttx.apps.nshlib.o: \
 	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/fs/ioctl.h \
 	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/serial/tioctl.h \
 	/cygdrive/e/hamstrone/nuttx/os/include/sys/ioctl.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/input/ioctl.h \
 	/cygdrive/e/hamstrone/nuttx/os/include/sys/utsname.h \
 	/cygdrive/e/hamstrone/nuttx/os/include/unistd.h \
 	/cygdrive/e/hamstrone/nuttx/os/include/sys/types.h \
@@ -964,6 +965,7 @@ nsh_builtin.cygdrive.e.hamstrone.nuttx.apps.nshlib.o: \
 	/cygdrive/e/hamstrone/nuttx/os/include/arch/inttypes.h \
 	/cygdrive/e/hamstrone/nuttx/os/include/limits.h \
 	/cygdrive/e/hamstrone/nuttx/os/include/arch/limits.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/input/ioctl.h \
 	/cygdrive/e/hamstrone/nuttx/os/include/sys/wait.h \
 	/cygdrive/e/hamstrone/nuttx/os/include/sys/types.h \
 	/cygdrive/e/hamstrone/nuttx/os/include/signal.h \
