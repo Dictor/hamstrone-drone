@@ -1,5 +1,23 @@
-my_app_main.cygdrive.e.hamstrone.nuttx.apps.myapp.o: \
-	my_app_main.c \
+hamster_tongue.cygdrive.e.hamstrone.nuttx.apps.hamstrone.o: \
+	hamster_tongue.c \
+	include/hamster_tongue.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/unistd.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/sys/types.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/config.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/compiler.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/stdint.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/arch/types.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/arch/inttypes.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/limits.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/arch/limits.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/stdlib.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/string.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/stddef.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/b2c.h
+
+hamstrone_main.cygdrive.e.hamstrone.nuttx.apps.hamstrone.o: \
+	hamstrone_main.c \
+	include/main.h \
 	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/config.h \
 	/cygdrive/e/hamstrone/nuttx/os/include/stdio.h \
 	/cygdrive/e/hamstrone/nuttx/os/include/sys/types.h \
@@ -49,5 +67,8 @@ my_app_main.cygdrive.e.hamstrone.nuttx.apps.myapp.o: \
 	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/net/net.h \
 	/cygdrive/e/hamstrone/nuttx/os/include/arch/arch.h \
 	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/pgalloc.h \
-	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/addrenv.h
+	/cygdrive/e/hamstrone/nuttx/os/include/nuttx/addrenv.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/fcntl.h \
+	include/hamster_tongue.h \
+	/cygdrive/e/hamstrone/nuttx/os/include/stdlib.h
 
