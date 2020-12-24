@@ -1,1 +1,0 @@
-{ "rand", SCHED_PRIORITY_DEFAULT, 2048, rand_main },
