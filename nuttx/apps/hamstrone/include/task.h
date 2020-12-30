@@ -3,11 +3,16 @@
 
 #include <time.h>
 #include <unistd.h>
+#include <stdio.h>
 #include "hamstrone_main.h"
 #include "hamster_tongue.h"
 #include "config.h"
+#include "serialize.h"
 #include <stdlib.h>
+#include <time.h>
+#include "value_store.h"
 
-extern int HAMSTRONE_GLOBAL_TELEMERTY_PORT;
+int tskTransmitValue(int argc, char * argv []);
+int tskUpdateValue(int argc, char *argv[]);
 
 #endif
