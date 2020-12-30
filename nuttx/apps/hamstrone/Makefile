@@ -1,11 +1,12 @@
 include $(APPDIR)/Make.defs
 
+MAINSRC = hamstrone_main.c
+CSRCS = hamster_tongue.c serialize.c task.c value_store.c
+
 PROGNAME  = hamstrone
-PRIORITY  = 100
+PRIORITY  = SCHED_PRIORITY_DEFAULT
 STACKSIZE = CONFIG_DEFAULT_TASK_STACKSIZE
 MODULE    = $(CONFIG_HAMSTRONE)
 
-MAINSRC = hamstrone_main.c
-CSRCS += hamster_tongue.c
 
 include $(APPDIR)/Application.mk
