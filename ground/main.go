@@ -18,11 +18,11 @@ var (
 
 type (
 	hamsterTongueMessage struct {
-		Length  byte // byte count of Verb~CRC
-		Verb    byte
-		Noun    byte
-		Payload []byte
-		CRC     byte // CRC-8 of Verb ~ Payload
+		Length  byte   `json:"length"` // byte count of Verb~CRC
+		Verb    byte   `json:"verb"`
+		Noun    byte   `json:"noun"`
+		Payload []byte `json:"payload"`
+		CRC     byte   `json:"crc"` // CRC-8 of Verb ~ Payload
 	}
 )
 
@@ -69,12 +69,14 @@ func main() {
 	globalLogger.Infoln("serial port opened")
 
 	msgResult := make(chan *hamsterTongueMessage)
+	wsSendQueue := make(chan []byte, 32)
 	go listenPort(port, 256, msgResult)
-	go decodeMessage(msgResult)
+	go decodeMessage(msgResult, wsSendQueue)
 
 	wshub := ws.NewHub()
 	go wshub.Run(wsEvent)
-	go broadcastValue(wshub, 200)
+
+	go broadcastData(wshub, wsSendQueue, 200)
 
 	e.GET("/ws", func(c echo.Context) error {
 		wshub.AddClient(c.Response().Writer, c.Request())
@@ -86,5 +88,6 @@ func main() {
 	e.File("/", "ui/index.html")
 	e.File("/style", "ui/style.css")
 	e.File("/script", "ui/script.js")
+	e.File("/protocol", "ui/protocol.js")
 	globalLogger.Panic(e.Start(webListenAddress))
 }

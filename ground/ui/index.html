@@ -9,21 +9,34 @@
     <script src="https://use.fontawesome.com/releases/v5.2.0/js/all.js"></script>
     <link rel="stylesheet" href="./style">
     <script src="./script"></script>
+    <script src="./protocol"></script>
     <title>hamstrone-ground</title>
 </head>
 
 <body onload="HamstroneApp.init()">
     <div id="app">
         <div class="menu">
-            <span class="menu-title">Hamstrone Ground</span>
-        </div>
-        <div class="content">
-            <div class="value" v-for="(v, i) in values" :id="i">
-                <span class="value-key">{{valuekeys[v.name] ? valuekeys[v.name] : v.name}}</span>
-                <span class="value-value">{{v.value}}</span>
+            <p class="menu-title">Hamstrone Ground</p>
+            <div class="menu-wrapper">
+                <div class="menu-element" v-for="(v, i) in menus" :id="i" @click="onMenuClick(v)">
+                    {{v.text}}
+                </div>
             </div>
         </div>
-    </div>
+        <div class="content">
+            <div id="page-value" v-if="currentPage == 'value'">
+                <div class="value-row" v-for="(v, i) in values" :id="i">
+                    <span class="value-key">{{valueKeys[v.name] ? valueKeys[v.name] : v.name}}</span>
+                    <span class="value-value">{{v.value}}</span>
+                </div>
+                <p v-if="values.length < 1">There is no recieved value.</p>
+            </div>
+            <div id="page-signal" v-if="currentPage == 'signal'">
+                <div class="signal-row" v-for="(v, i) in signals">
+                    {{v.time}}: <span>{{findSignalNounString(v.noun)}}</span>
+                </div>
+            </div>
+        </div>
 </body>
 
 </html>

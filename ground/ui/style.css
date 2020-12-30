@@ -5,6 +5,23 @@ body {
 .menu-title {
     font-size: 2rem;
     color: cornflowerblue;
+    margin: 1rem 0;
+}
+
+.menu-wrapper {
+    display: flex;
+}
+
+.menu-element {
+    background-color: blue;
+    color: white;
+    font-weight: bold;
+    padding: 0.5rem;
+    margin: 0 0.5rem;
+}
+
+.menu-element:first-child {
+    margin-left: 0;
 }
 
 .content {
@@ -13,11 +30,15 @@ body {
     flex-direction: column;
 }
 
-.value {
+.value-row {
     width: 50%;
     box-sizing: border-box;
 }
 
-.value>.value-value {
+.value-row>.value-value {
     float: right;
+}
+
+.signal-row>span {
+    font-weight: bold;
 }

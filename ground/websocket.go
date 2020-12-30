@@ -8,6 +8,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type (
+	generalMessage struct {
+		Type string      `json:"type"`
+		Data interface{} `json:"data"`
+	}
+)
+
 func wsEvent(evt *ws.WebsocketEvent) {
 	switch evt.Kind {
 	case ws.EVENT_RECIEVE:
@@ -29,13 +36,27 @@ func wsEvent(evt *ws.WebsocketEvent) {
 	}
 }
 
-func broadcastValue(h *ws.WebsocketHub, interval int) {
+func broadcastData(h *ws.WebsocketHub, sendQueue chan []byte, interval int) {
 	for {
-		data, err := json.Marshal(&Value)
+		data, err := json.Marshal(generalMessage{
+			Type: "value",
+			Data: Value,
+		})
 		if err != nil {
 			globalLogger.WithField("error", err).Errorln("error caused while value broadcast")
 		}
 		h.SendAll(data)
+
+	emptyLoop:
+		for {
+			select {
+			case q := <-sendQueue:
+				h.SendAll(q)
+			default:
+				break emptyLoop
+			}
+		}
+
 		time.Sleep(time.Millisecond * time.Duration(interval))
 	}
 }

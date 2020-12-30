@@ -2,9 +2,11 @@ package main
 
 import (
 	"encoding/binary"
+	"encoding/json"
 	"io"
 	"strconv"
 
+	"github.com/dictor/hamstrone_ground/hamstertongue"
 	"github.com/sirupsen/logrus"
 )
 
@@ -40,8 +42,10 @@ func listenPort(stream io.ReadWriteCloser, bufferSize int, result chan *hamsterT
 						}
 					}
 				} else {
-					if b == 0xFF {
+					if b == hamstertongue.MessageMarker {
 						markerFound = true
+					} else {
+						globalLogger.Debugf("unknown packet recieved : %d\n", b)
 					}
 				}
 			}
@@ -53,7 +57,7 @@ func listenPort(stream io.ReadWriteCloser, bufferSize int, result chan *hamsterT
 	}
 }
 
-func decodeMessage(msgchan chan *hamsterTongueMessage) {
+func decodeMessage(msgchan chan *hamsterTongueMessage, sendchan chan []byte) {
 	for {
 		select {
 		case msg := <-msgchan:
@@ -64,9 +68,19 @@ func decodeMessage(msgchan chan *hamsterTongueMessage) {
 				"payload": msg.Payload,
 			}).Debugf("serial message income")
 			switch msg.Verb {
-			case 0: //Heartbeat
-			case 1: //Value
+			case hamstertongue.MessageVerbHeartbeat:
+			case hamstertongue.MessageVerbValue:
 				Value[strconv.Itoa(int(msg.Noun))] = binary.LittleEndian.Uint32(addArrayPadding(msg.Payload, 4))
+			case hamstertongue.MessageVerbSignal:
+				data, err := json.Marshal(generalMessage{
+					Type: "signal",
+					Data: msg,
+				})
+				if err != nil {
+					globalLogger.WithField("error", err).Errorln("error caused while making message")
+					continue
+				}
+				sendchan <- data
 			}
 		}
 	}
