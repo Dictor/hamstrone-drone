@@ -14,3 +14,4 @@ hamstrone_ground
 *.vscode*
 *.bdat
 *.pdat
+*.dep
