@@ -5,10 +5,17 @@ import (
 	"io/ioutil"
 )
 
+type (
+	ValueInfo struct {
+		Name string `json:"name"`
+		Unit string `json:"unit"`
+	}
+)
+
 var (
 	// ValueIDToKey is definition of string value key's integer id
-	ValueIDToKey map[string]string = map[string]string{}
-	Value        map[string]uint32 = map[string]uint32{}
+	ValueIDToKey map[string]ValueInfo = map[string]ValueInfo{}
+	Value        map[string]uint32    = map[string]uint32{}
 )
 
 func ReadValueData(path string) error {

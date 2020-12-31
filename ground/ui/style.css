@@ -31,14 +31,18 @@ body {
 }
 
 .value-row {
-    width: 50%;
+    width: 33%;
     box-sizing: border-box;
+    text-align: right;
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
 }
 
-.value-row>.value-value {
-    float: right;
+.value-row>.value-key {
+    float: left;
 }
 
 .signal-row>span {
     font-weight: bold;
+    background-color: firebrick;
 }

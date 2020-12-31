@@ -26,8 +26,9 @@
         <div class="content">
             <div id="page-value" v-if="currentPage == 'value'">
                 <div class="value-row" v-for="(v, i) in values" :id="i">
-                    <span class="value-key">{{valueKeys[v.name] ? valueKeys[v.name] : v.name}}</span>
+                    <span class="value-key">{{findValueInfoString(v.name, "name")}}</span>
                     <span class="value-value">{{v.value}}</span>
+                    <span class="value-unit">{{findValueInfoString(v.name, "unit")}}</span>
                 </div>
                 <p v-if="values.length < 1">There is no recieved value.</p>
             </div>

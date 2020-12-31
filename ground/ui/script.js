@@ -24,6 +24,23 @@ var HamstroneApp = {
                     }
                     return noun;
                 },
+                findValueInfoString: function(key, type) {
+                    if (this.valueKeys[key]) {
+                        switch (type) {
+                            case "name":
+                                return this.valueKeys[key].name;
+                            case "unit":
+                                return this.valueKeys[key].unit;
+                        }
+                    } else {
+                        switch (type) {
+                            case "name":
+                                return key;
+                            case "unit":
+                                return "";
+                        }
+                    }
+                }
             },
             mounted: async function() {
                 let resp = await axios.get("./definition/value");
