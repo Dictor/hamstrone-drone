@@ -32,8 +32,7 @@ int hamstrone_main(int argc, FAR char *argv[]) {
   HAMSTRONE_InitValueStore(HAMSTRONE_CONFIG_VALUE_SIZE);
 
   /* Start tasks */
-  const char* tskargv[] = {"1000000"};
-  task_create("tskTransmitValue", 100, 2048, &tskTransmitValue, tskargv);
+  task_create("tskTransmitValue", 100, 2048, &tskTransmitValue, NULL);
   task_create("tskUpdateValue", 100, 2048, &tskUpdateValue, NULL);
 
   /* Initialize complete */
