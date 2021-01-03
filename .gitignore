@@ -15,3 +15,4 @@ hamstrone_ground
 *.bdat
 *.pdat
 *.dep
+System.map
