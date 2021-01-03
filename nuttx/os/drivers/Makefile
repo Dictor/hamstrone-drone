@@ -76,7 +76,7 @@ include 1wire/Make.defs
 include rf/Make.defs
 
 ifeq ($(CONFIG_SPECIFIC_DRIVERS),y)
-include platform/Make.defs
+#include platform/Make.defs
 endif
 
 ifeq ($(CONFIG_DEV_SIMPLE_ADDRENV),y)
