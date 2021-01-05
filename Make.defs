@@ -1,3 +1,0 @@
-ifneq ($(CONFIG_HAMSTRONE),)
-CONFIGURED_APPS += $(APPDIR)/hamstrone
-endif
