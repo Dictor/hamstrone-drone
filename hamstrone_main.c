@@ -11,7 +11,7 @@
  ****************************************************************************/
 
 
-int HAMSTRONE_GLOBAL_TELEMERTY_PORT;
+int HAMSTRONE_GLOBAL_TELEMETRY_PORT, HAMSTRONE_GLOBAL_IMU_PORT;
 sem_t HAMSTRONE_GLOBAL_TELEMETRY_SEMAPHORE;
 
 int hamstrone_main(int argc, FAR char *argv[]) {
@@ -22,9 +22,16 @@ int hamstrone_main(int argc, FAR char *argv[]) {
   HAMSTERTONGUE_SetWriteSemaphore(&HAMSTRONE_GLOBAL_TELEMETRY_SEMAPHORE);
 
   /* Initialize telemetry serial port */
-  HAMSTRONE_GLOBAL_TELEMERTY_PORT = open(HAMSTRONE_CONFIG_PORT_PATH, O_RDWR);
-  if (HAMSTRONE_GLOBAL_TELEMERTY_PORT < 0) {
-    printf("fatal error: telem init fail\n");
+  HAMSTRONE_GLOBAL_TELEMETRY_PORT = open(HAMSTRONE_CONFIG_SERIALPORT1_PATH, O_RDWR);
+  if (HAMSTRONE_GLOBAL_TELEMETRY_PORT < 0) {
+    printf("fatal error: telem port init fail\n");
+    return 1;
+  }
+
+  /* Initialize i2c port */
+  HAMSTRONE_GLOBAL_IMU_PORT = open(HAMSTRONE_CONFIG_I2CPORT1_PATH, O_RDWR);
+  if (HAMSTRONE_GLOBAL_IMU_PORT < 0) {
+    printf("fatal error: accel port init fail\n");
     return 1;
   }
 
@@ -37,7 +44,7 @@ int hamstrone_main(int argc, FAR char *argv[]) {
 
   /* Initialize complete */
   HAMSTERTONGUE_WriteAndFreeMessage(
-    HAMSTRONE_GLOBAL_TELEMERTY_PORT, 
+    HAMSTRONE_GLOBAL_TELEMETRY_PORT, 
     HAMSTERTONGUE_NewMessage(HAMSTERTONGUE_MESSAGE_VERB_SIGNAL, HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_INITOK, 0)
   );
   while(1) {
