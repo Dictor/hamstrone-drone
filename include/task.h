@@ -19,5 +19,6 @@
 
 int tskTransmitValue(int argc, char * argv []);
 int tskUpdateValue(int argc, char *argv[]);
+int readI2CSingle(int fd, uint16_t addr, uint8_t regaddr, uint8_t* buf);
 
 #endif

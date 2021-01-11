@@ -9,7 +9,7 @@ int tskTransmitValue(int argc, char *argv[]) {
         for (int i = 0; i < HAMSTRONE_CONFIG_VALUE_SIZE; i++) {
             msg->Noun = i;
             HAMSTRONE_Serialize32(HAMSTRONE_ReadValueStore(i), msg->Payload, 0);
-            HAMSTERTONGUE_WriteMessage(HAMSTRONE_GLOBAL_TELEMERTY_PORT, msg);
+            HAMSTERTONGUE_WriteMessage(HAMSTRONE_GLOBAL_TELEMETRY_PORT, msg);
         }
         usleep(period);
     }
@@ -22,9 +22,48 @@ int tskUpdateValue(int argc, char *argv[]) {
     struct timespec startTs, currentTs;
     clock_gettime(CLOCK_REALTIME, &startTs);
 
+    uint8_t temph, templ;
+    uint16_t temp;
+    int ret;
     while(1) {
+        /* update runtime */
         clock_gettime(CLOCK_REALTIME, &currentTs);
         HAMSTRONE_WriteValueStore(0, (uint32_t)(currentTs.tv_sec - startTs.tv_sec));
+        
+        /* update itg3205 */
+        ret = 0;
+        ret |= readI2CSingle(HAMSTRONE_GLOBAL_IMU_PORT, HAMSTRONE_CONFIG_I2C_ADDRESS_ITG3205, HAMSTRONE_CONFIG_ITG3205_TEMP_OUT_H, &temph);
+        ret |= readI2CSingle(HAMSTRONE_GLOBAL_IMU_PORT, HAMSTRONE_CONFIG_I2C_ADDRESS_ITG3205, HAMSTRONE_CONFIG_ITG3205_TEMP_OUT_L, &templ);
+        if (ret < 0) {
+            HAMSTERTONGUE_WriteAndFreeMessage(
+                HAMSTRONE_GLOBAL_TELEMETRY_PORT, 
+                HAMSTERTONGUE_NewMessage(HAMSTERTONGUE_MESSAGE_VERB_SIGNAL, HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_I2CREADFAIL, 0)
+            );
+        }
+        temp = (temph << 8) + templ;
+        HAMSTRONE_WriteValueStore(1, (uint32_t)temp);
         usleep(period);
     }
+}
+
+int readI2CSingle(int fd, uint16_t addr, uint8_t regaddr, uint8_t* buf) {
+    struct i2c_msg_s msg[2];
+    struct i2c_transfer_s trans;
+    
+    msg[0].addr = addr;
+    msg[0].flags = 0;
+    msg[0].buffer = &regaddr;
+    msg[0].length = 1;
+    msg[0].frequency = 4000000;
+
+    msg[1].addr = addr;
+    msg[1].flags = I2C_M_READ;
+    msg[1].buffer = buf;
+    msg[1].length = 1;
+    msg[1].frequency = 4000000;
+
+    trans.msgv = (struct i2c_msg_s*)msg;
+    trans.msgc = 2;
+
+    return ioctl(fd, I2CIOC_TRANSFER, (unsigned long)&trans);
 }
