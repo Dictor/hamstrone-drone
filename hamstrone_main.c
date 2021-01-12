@@ -31,8 +31,16 @@ int hamstrone_main(int argc, FAR char *argv[]) {
   /* Initialize i2c port */
   HAMSTRONE_GLOBAL_IMU_PORT = open(HAMSTRONE_CONFIG_I2CPORT1_PATH, O_RDWR);
   if (HAMSTRONE_GLOBAL_IMU_PORT < 0) {
-    printf("fatal error: accel port init fail\n");
-    return 1;
+    char msg[32];
+    sprintf(msg, "i2c,errno=%d", HAMSTRONE_GLOBAL_IMU_PORT);
+    HAMSTERTONGUE_WriteAndFreeMessage(
+      HAMSTRONE_GLOBAL_TELEMETRY_PORT, 
+      HAMSTERTONGUE_NewStringMessage(
+        HAMSTERTONGUE_MESSAGE_VERB_SIGNAL, 
+        HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_INITFAIL, 
+        msg
+      )
+    );
   }
 
   /* Initialize telemetry value store */
