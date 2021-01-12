@@ -36,7 +36,7 @@ typedef struct _HAMSTERTONGUE_Message {
     uint8_t PayloadLength;
 } HAMSTERTONGUE_Message;
 
-sem_t* WriteSemaphore;
+//sem_t* WriteSemaphore;
 
 void HAMSTERTONGUE_SetWriteSemaphore(sem_t* sem);
 HAMSTERTONGUE_Message* HAMSTERTONGUE_NewMessage(uint8_t verb, uint8_t noun, uint8_t payloadLength);

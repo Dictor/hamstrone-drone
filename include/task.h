@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/ioctl.h>
 
 /* Hamstrone header */
 #include "hamstrone_main.h"
