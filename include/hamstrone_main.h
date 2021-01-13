@@ -10,6 +10,8 @@
 #include "task.h"
 #include "value_store.h"
 #include <semaphore.h>
+#include <errno.h>
+#include <string.h>
 
 extern int HAMSTRONE_GLOBAL_TELEMETRY_PORT;
 extern int HAMSTRONE_GLOBAL_IMU_PORT;
