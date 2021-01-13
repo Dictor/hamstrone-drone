@@ -1,12 +1,18 @@
 #ifndef HAMSTERTONGUE_H
 #define HAMSTERTONGUE_H
 
+/* Standard header */
 #include <unistd.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include "config.h"
 #include <semaphore.h>
+#include <stdarg.h>
+#include <stdio.h>
+
+/* Hamstrone header */
+#include "config.h"
+
 
 /* MESSAGE STRUCTURE */
 #define HAMSTERTONGUE_MESSAGE_MARKER 0xFF
@@ -41,6 +47,7 @@ typedef struct _HAMSTERTONGUE_Message {
 void HAMSTERTONGUE_SetWriteSemaphore(sem_t* sem);
 HAMSTERTONGUE_Message* HAMSTERTONGUE_NewMessage(uint8_t verb, uint8_t noun, uint8_t payloadLength);
 HAMSTERTONGUE_Message* HAMSTERTONGUE_NewStringMessage(uint8_t verb, uint8_t noun, char* str);
+HAMSTERTONGUE_Message* HAMSTERTONGUE_NewFormatStringMessage(uint8_t verb, uint8_t noun, int bufSize, char* format, ...);
 uint16_t HAMSTERTONGUE_GetMessageLength(HAMSTERTONGUE_Message* msg);
 uint8_t* HAMSTERTONGUE_SerializeMessage(HAMSTERTONGUE_Message* msg);
 ssize_t HAMSTERTONGUE_WriteMessage(int fd, HAMSTERTONGUE_Message* msg);

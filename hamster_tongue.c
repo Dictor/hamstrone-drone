@@ -22,6 +22,15 @@ HAMSTERTONGUE_Message* HAMSTERTONGUE_NewStringMessage(uint8_t verb, uint8_t noun
 	return msg;
 }
 
+HAMSTERTONGUE_Message* HAMSTERTONGUE_NewFormatStringMessage(uint8_t verb, uint8_t noun, int bufSize, char* format, ...) {
+	char* str = malloc(sizeof(char) * bufSize);
+	va_list argptr;
+    va_start(argptr, format);
+    vsnprintf(str, (size_t)bufSize, format, argptr);
+    va_end(argptr);
+	return HAMSTERTONGUE_NewStringMessage(verb, noun, str);
+}
+
 uint16_t HAMSTERTONGUE_GetMessageLength(HAMSTERTONGUE_Message* msg) {
 	return msg->PayloadLength + 5;
 }
