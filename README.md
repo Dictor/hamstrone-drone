@@ -12,5 +12,5 @@ For build hamstrone development environment, below programs are required.
 Execute [install script](https://gist.github.com/Dictor/7c91d169fe4b04a8cca2519de5d49546#gistcomment-3581782) on cygwin after above requirement is fulfilled
 
 ## Tools
-Hamstrone environment proivide Makefile for often using feature. Execute `make help` in `hamstrone` directory.
+Hamstrone environment proivide Makefile for often used feature. Execute `make help` in `hamstrone` directory for usage.
 For additional installation instruction, see [here](https://kimdictor.kr/post/embedded/intall-nuttx-nucleo/)
