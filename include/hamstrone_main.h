@@ -3,6 +3,7 @@
 
 #include <nuttx/config.h>
 #include <nuttx/sched.h>
+#include <nshlib/nshlib.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include "hamster_tongue.h"
