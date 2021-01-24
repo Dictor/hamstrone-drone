@@ -23,7 +23,7 @@ int tskUpdateValue(int argc, char *argv[])
 {
     int period = atoi(argv[1]);
     if (period <= 0)
-        period = 100;
+        period = 200;
 
     struct timespec startTs, currentTs;
     clock_gettime(CLOCK_REALTIME, &startTs);
@@ -63,10 +63,11 @@ int readI2CSingle(int fd, uint16_t addr, uint8_t regaddr, uint8_t *buf)
 {
     struct i2c_msg_s msg[2];
     struct i2c_transfer_s trans;
+    uint8_t regaddrbuf[1] = {regaddr};
 
     msg[0].addr = addr;
     msg[0].flags = 0;
-    msg[0].buffer = &regaddr;
+    msg[0].buffer = regaddrbuf;
     msg[0].length = 1;
     msg[0].frequency = 400000;
 
