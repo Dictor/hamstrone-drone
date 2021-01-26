@@ -40,8 +40,8 @@ int tskUpdateValue(int argc, char *argv[])
         /* update itg3205 */
         ret1 = 0;
         ret2 = 0;
-        ret1 = readI2CSingle(HAMSTRONE_GLOBAL_IMU_PORT, HAMSTRONE_CONFIG_I2C_ADDRESS_ITG3205, HAMSTRONE_CONFIG_ITG3205_TEMP_OUT_H, &temph);
-        ret2 = readI2CSingle(HAMSTRONE_GLOBAL_IMU_PORT, HAMSTRONE_CONFIG_I2C_ADDRESS_ITG3205, HAMSTRONE_CONFIG_ITG3205_TEMP_OUT_L, &templ);
+        ret1 = readI2CSingle(HAMSTRONE_GLOBAL_IMU_PORT, HAMSTRONE_CONFIG_I2C_ADDRESS_MPU6050, HAMSTRONE_CONFIG_MPU6050_TEMP_OUT_H, &temph);
+        ret2 = readI2CSingle(HAMSTRONE_GLOBAL_IMU_PORT, HAMSTRONE_CONFIG_I2C_ADDRESS_MPU6050, HAMSTRONE_CONFIG_MPU6050_TEMP_OUT_L, &templ);
         if (ret1 < 0 || ret2 < 0)
         {
             HAMSTERTONGUE_WriteAndFreeMessage(
