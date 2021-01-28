@@ -23,43 +23,89 @@ int tskUpdateValue(int argc, char *argv[])
 {
     int period = atoi(argv[1]);
     if (period <= 0)
-        period = 200;
+        period = 5000;
 
     struct timespec startTs, currentTs;
     clock_gettime(CLOCK_REALTIME, &startTs);
 
-    uint8_t temph, templ;
-    uint16_t temp;
-    int ret1, ret2;
+    #define VALUE_CNT 4
+    uint8_t valuel, valueh;
+    uint16_t value;
+    uint8_t devAddr[VALUE_CNT] = {
+        HAMSTRONE_CONFIG_I2C_ADDRESS_MPU6050,
+        HAMSTRONE_CONFIG_I2C_ADDRESS_MPU6050,
+        HAMSTRONE_CONFIG_I2C_ADDRESS_MPU6050,
+        HAMSTRONE_CONFIG_I2C_ADDRESS_MPU6050,
+    };
+    uint8_t regAddr[VALUE_CNT] = {
+        HAMSTRONE_CONFIG_MPU6050_ACCEL_XOUT_H,
+        HAMSTRONE_CONFIG_MPU6050_ACCEL_YOUT_H,
+        HAMSTRONE_CONFIG_MPU6050_ACCEL_ZOUT_H,
+        HAMSTRONE_CONFIG_MPU6050_TEMP_OUT_H,
+    };
+    int errcnt;
+
+    if (I2CWriteSingle(HAMSTRONE_GLOBAL_IMU_PORT, HAMSTRONE_CONFIG_I2C_ADDRESS_MPU6050, HAMSTRONE_CONFIG_MPU6050_PWR_MGMT_1, 0b00000000) < 0) {
+        HAMSTERTONGUE_WriteAndFreeMessage(
+            HAMSTRONE_GLOBAL_TELEMETRY_PORT,
+            HAMSTERTONGUE_NewFormatStringMessage(
+                HAMSTERTONGUE_MESSAGE_VERB_SIGNAL,
+                HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_I2CREADFAIL,
+                24,
+                "fd=%d pwr_mgmt_1",
+                HAMSTRONE_GLOBAL_IMU_PORT
+            )
+        );
+    }
     while (1)
     {
         /* update runtime */
         clock_gettime(CLOCK_REALTIME, &currentTs);
         HAMSTRONE_WriteValueStore(0, (uint32_t)(currentTs.tv_sec - startTs.tv_sec));
 
-        /* update itg3205 */
-        ret1 = 0;
-        ret2 = 0;
-        ret1 = readI2CSingle(HAMSTRONE_GLOBAL_IMU_PORT, HAMSTRONE_CONFIG_I2C_ADDRESS_MPU6050, HAMSTRONE_CONFIG_MPU6050_TEMP_OUT_H, &temph);
-        ret2 = readI2CSingle(HAMSTRONE_GLOBAL_IMU_PORT, HAMSTRONE_CONFIG_I2C_ADDRESS_MPU6050, HAMSTRONE_CONFIG_MPU6050_TEMP_OUT_L, &templ);
-        if (ret1 < 0 || ret2 < 0)
-        {
-            HAMSTERTONGUE_WriteAndFreeMessage(
-                HAMSTRONE_GLOBAL_TELEMETRY_PORT,
-                HAMSTERTONGUE_NewFormatStringMessage(
-                    HAMSTERTONGUE_MESSAGE_VERB_SIGNAL,
-                    HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_I2CREADFAIL,
-                    24,
-                    "fd=%d ret=%d,%d",
-                    HAMSTRONE_GLOBAL_IMU_PORT, ret1, ret2));
+        /* update mpu6050 */
+        for (int i = 0; i < VALUE_CNT; i++) {
+            errcnt = 0;
+            if (I2CReadWriteSingle(HAMSTRONE_GLOBAL_IMU_PORT, devAddr[i], regAddr[i], &valueh) < 0) errcnt++;
+            if (I2CReadWriteSingle(HAMSTRONE_GLOBAL_IMU_PORT, devAddr[i], regAddr[i]+1, &valuel) < 0) errcnt++;
+            if (errcnt > 0) {
+                HAMSTERTONGUE_WriteAndFreeMessage(
+                    HAMSTRONE_GLOBAL_TELEMETRY_PORT,
+                    HAMSTERTONGUE_NewFormatStringMessage(
+                        HAMSTERTONGUE_MESSAGE_VERB_SIGNAL,
+                        HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_I2CREADFAIL,
+                        24,
+                        "fd=%d errcnt=%d",
+                        HAMSTRONE_GLOBAL_IMU_PORT, errcnt
+                    )
+                );
+                continue;
+            }
+            value = (valueh << 8) | valuel;
+            HAMSTRONE_WriteValueStore(2 + i, (uint32_t)value);
         }
-        temp = (temph << 8) + templ;
-        HAMSTRONE_WriteValueStore(1, (uint32_t)temp);
         usleep(period);
     }
 }
 
-int readI2CSingle(int fd, uint16_t addr, uint8_t regaddr, uint8_t *buf)
+int I2CWriteSingle(int fd, uint16_t addr, uint8_t regaddr, uint8_t value) {
+    struct i2c_msg_s msg[1];
+    struct i2c_transfer_s trans;
+    uint8_t rawbuf[2] = {regaddr, value};
+
+    msg[0].addr = addr;
+    msg[0].flags = 0;
+    msg[0].buffer = rawbuf;
+    msg[0].length = 2;
+    msg[0].frequency = 400000;
+
+    trans.msgv = (struct i2c_msg_s *)msg;
+    trans.msgc = 1;
+
+    return ioctl(fd, I2CIOC_TRANSFER, &trans);
+}
+
+int I2CReadWriteSingle(int fd, uint16_t addr, uint8_t regaddr, uint8_t *buf)
 {
     struct i2c_msg_s msg[2];
     struct i2c_transfer_s trans;
