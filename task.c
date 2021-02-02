@@ -4,7 +4,7 @@ int tskTransmitValue(int argc, char *argv[])
 {
     int period = atoi(argv[1]);
     if (period <= 0)
-        period = 100000;
+        period = 200000; //200ms
     HAMSTERTONGUE_Message *msg = HAMSTERTONGUE_NewMessage(HAMSTERTONGUE_MESSAGE_VERB_VALUE, 0, sizeof(HAMSTRONE_CONFIG_VALUE_TYPE));
 
     while (1)
@@ -23,10 +23,10 @@ int tskUpdateValue(int argc, char *argv[])
 {
     int period = atoi(argv[1]);
     if (period <= 0)
-        period = 5000;
+        period = 1000; //2ms
 
-    struct timespec startTs, currentTs;
-    clock_gettime(CLOCK_REALTIME, &startTs);
+    struct timespec startTs, currentTs, taskendTs;
+    clock_gettime(CLOCK_MONOTONIC, &startTs);
 
     #define VALUE_CNT 4
     uint8_t valuel, valueh;
@@ -60,7 +60,7 @@ int tskUpdateValue(int argc, char *argv[])
     while (1)
     {
         /* update runtime */
-        clock_gettime(CLOCK_REALTIME, &currentTs);
+        clock_gettime(CLOCK_MONOTONIC, &currentTs);
         HAMSTRONE_WriteValueStore(0, (uint32_t)(currentTs.tv_sec - startTs.tv_sec));
 
         /* update mpu6050 */
@@ -85,6 +85,9 @@ int tskUpdateValue(int argc, char *argv[])
             HAMSTRONE_WriteValueStore(2 + i, (uint32_t)value);
         }
         usleep(period);
+        clock_gettime(CLOCK_MONOTONIC, &taskendTs);
+        // PROPERY TICK RESOULUTION IS SMALL THAN 1000USEC
+        HAMSTRONE_WriteValueStore(1, (uint32_t)((taskendTs.tv_nsec - currentTs.tv_nsec) / 1000000));
     }
 }
 
