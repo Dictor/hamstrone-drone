@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
+#include <mqueue.h>
 
 /* Hamstrone header */
 #include "hamstrone_main.h"
@@ -20,6 +21,7 @@
 
 int tskTransmitValue(int argc, char * argv []);
 int tskUpdateValue(int argc, char *argv[]);
+int tskParsingGPS(int argc, char *argv[]);
 int I2CWriteSingle(int fd, uint16_t addr, uint8_t regaddr, uint8_t value);
 int I2CReadWriteSingle(int fd, uint16_t addr, uint8_t regaddr, uint8_t *buf);
 

@@ -91,6 +91,33 @@ int tskUpdateValue(int argc, char *argv[])
     }
 }
 
+int tskParsingGPS(int argc, char *argv[])
+{
+    #define MSG_BUF_SIZE 100
+    char buf[MSG_BUF_SIZE];
+    int msglen;
+    mqd_t mq = mq_open("gpsmsg", O_RDONLY);
+
+    while(1) { 
+        msglen = mq_receive(
+            mq,
+            buf, 
+            MSG_BUF_SIZE, NULL);
+        if (msglen >= 0) {
+            HAMSTERTONGUE_WriteAndFreeMessage(
+                HAMSTRONE_GLOBAL_TELEMETRY_PORT,
+                HAMSTERTONGUE_NewFormatStringMessage(
+                    HAMSTERTONGUE_MESSAGE_VERB_SIGNAL,
+                    HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_DEBUG,
+                    100,
+                    "%d : %s",
+                    msglen, buf));
+        }
+        usleep(1000000); 
+    } 
+    
+}
+
 int I2CWriteSingle(int fd, uint16_t addr, uint8_t regaddr, uint8_t value) {
     struct i2c_msg_s msg[1];
     struct i2c_transfer_s trans;
