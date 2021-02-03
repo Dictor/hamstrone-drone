@@ -93,27 +93,27 @@ int tskUpdateValue(int argc, char *argv[])
 
 int tskParsingGPS(int argc, char *argv[])
 {
-    #define MSG_BUF_SIZE 100
+    #define MSG_BUF_SIZE 24
     char buf[MSG_BUF_SIZE];
-    int msglen;
-    mqd_t mq = mq_open("gpsmsg", O_RDONLY);
+    int ret = 0;
+    mqd_t mq = mq_open("/mqgps", O_RDWR);
 
     while(1) { 
-        msglen = mq_receive(
+          /* Push test dummy data for developing */
+        ret = mq_send(
+            mq, 
+            "test",
+            5, 0);
+        int retno = errno;
+        HAMSTERTONGUE_Debugf("send ret=%d mq=%d err=%d", ret, mq, retno);
+
+        ret = mq_receive(
             mq,
             buf, 
             MSG_BUF_SIZE, NULL);
-        if (msglen >= 0) {
-            HAMSTERTONGUE_WriteAndFreeMessage(
-                HAMSTRONE_GLOBAL_TELEMETRY_PORT,
-                HAMSTERTONGUE_NewFormatStringMessage(
-                    HAMSTERTONGUE_MESSAGE_VERB_SIGNAL,
-                    HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_DEBUG,
-                    100,
-                    "%d : %s",
-                    msglen, buf));
-        }
-        usleep(1000000); 
+        retno = errno;
+        HAMSTERTONGUE_Debugf("recv ret=%d buf=%s err=%d", ret, buf, retno);
+        usleep(5000000); 
     } 
     
 }

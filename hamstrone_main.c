@@ -29,7 +29,7 @@ int hamstrone_main(int argc, FAR char *argv[])
     printf("fatal error: telem port init fail\n");
     return -1;
   }
-
+  HAMSTERTONGUE_SetDefaultFile(HAMSTRONE_GLOBAL_TELEMETRY_PORT);
   nsh_initialize();
 
   /* Initialize i2c port */
@@ -52,9 +52,12 @@ int hamstrone_main(int argc, FAR char *argv[])
   HAMSTRONE_InitValueStore(HAMSTRONE_CONFIG_VALUE_SIZE);
 
   /* Initialize gps message queue */
-  mqd_t mq = mq_open("gpsmsg", O_WRONLY | O_CREAT);
-  if (mq < 0)
-  {
+  struct mq_attr mq_opt;
+  mq_opt.mq_maxmsg = 8;
+  mq_opt.mq_msgsize = 16;
+
+  mqd_t mq = mq_open("/mqgps", O_RDWR | O_CREAT, 0777, &mq_opt);
+  if (mq < 0) {
     int currentErrno = errno;
     HAMSTERTONGUE_WriteAndFreeMessage(
         HAMSTRONE_GLOBAL_TELEMETRY_PORT,
@@ -62,21 +65,16 @@ int hamstrone_main(int argc, FAR char *argv[])
             HAMSTERTONGUE_MESSAGE_VERB_SIGNAL,
             HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_INITFAIL,
             48,
-            "mq_gpsmsg,errno=%s=%d",
-            strerror(-currentErrno), currentErrno));
+            "/mqgps,errno=%s=%d",
+            strerror(currentErrno), currentErrno));
     return -1;
   }
-
-  /* Push test dummy data for developing */
-  mq_send(
-    mq, 
-    "$GPGGA,114455.532,3735.0079,N,12701.6446,E,1,03,7.9,48.8,M,19.6,M,0.0,0000*48",
-    78, 0);
+  HAMSTERTONGUE_Debugf("mq: %d", mq, strerror(errno));
 
   /* Start tasks */
   task_create("tskTransmitValue", 100, 2048, &tskTransmitValue, NULL);
   task_create("tskUpdateValue", 100, 2048, &tskUpdateValue, NULL);
-  task_create("tskParsingGPS", 100, 2048, &tskParsingGPS, NULL);
+  task_create("tskParsingGPS", 120, 2048, &tskParsingGPS, NULL);
 
   /* Initialize complete */
   HAMSTERTONGUE_WriteAndFreeMessage(
