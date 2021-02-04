@@ -53,8 +53,8 @@ int hamstrone_main(int argc, FAR char *argv[])
 
   /* Initialize gps message queue */
   struct mq_attr mq_opt;
-  mq_opt.mq_maxmsg = 8;
-  mq_opt.mq_msgsize = 16;
+  mq_opt.mq_maxmsg = 5;
+  mq_opt.mq_msgsize = 32;
 
   mqd_t mq = mq_open("/mqgps", O_RDWR | O_CREAT, 0777, &mq_opt);
   if (mq < 0) {
@@ -69,7 +69,10 @@ int hamstrone_main(int argc, FAR char *argv[])
             strerror(currentErrno), currentErrno));
     return -1;
   }
-  HAMSTERTONGUE_Debugf("mq: %d", mq, strerror(errno));
+  mq_send(mq, "$GPGGA,114455.532,3735.0079,N,1", 32, 0);
+  mq_send(mq, "2701.6446,E,1,03,7.9,48.8,M,198", 32, 0);
+  mq_send(mq, ".6,M,0.0,0000*4", 16, 0);
+  HAMSTERTONGUE_Debugf("mq send ok");
 
   /* Start tasks */
   task_create("tskTransmitValue", 100, 2048, &tskTransmitValue, NULL);
