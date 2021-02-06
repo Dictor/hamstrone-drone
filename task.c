@@ -28,34 +28,36 @@ int tskUpdateValue(int argc, char *argv[])
     struct timespec startTs, currentTs, taskendTs;
     clock_gettime(CLOCK_MONOTONIC, &startTs);
 
-    #define VALUE_CNT 4
+#define SENSOR_CNT 1
+#define VALUE_CNT 4
     uint8_t valuel, valueh;
     uint16_t value;
-    uint8_t devAddr[VALUE_CNT] = {
-        HAMSTRONE_CONFIG_I2C_ADDRESS_MPU6050,
-        HAMSTRONE_CONFIG_I2C_ADDRESS_MPU6050,
-        HAMSTRONE_CONFIG_I2C_ADDRESS_MPU6050,
+    uint8_t devAddr[SENSOR_CNT] = {
         HAMSTRONE_CONFIG_I2C_ADDRESS_MPU6050,
     };
-    uint8_t regAddr[VALUE_CNT] = {
-        HAMSTRONE_CONFIG_MPU6050_ACCEL_XOUT_H,
-        HAMSTRONE_CONFIG_MPU6050_ACCEL_YOUT_H,
-        HAMSTRONE_CONFIG_MPU6050_ACCEL_ZOUT_H,
-        HAMSTRONE_CONFIG_MPU6050_TEMP_OUT_H,
-    };
+    uint8_t regAddr[SENSOR_CNT][VALUE_CNT] = {
+        {
+            HAMSTRONE_CONFIG_MPU6050_ACCEL_XOUT_H,
+            HAMSTRONE_CONFIG_MPU6050_ACCEL_YOUT_H,
+            HAMSTRONE_CONFIG_MPU6050_ACCEL_ZOUT_H,
+            HAMSTRONE_CONFIG_MPU6050_GYRO_XOUT_H,
+            HAMSTRONE_CONFIG_MPU6050_GYRO_YOUT_H,
+            HAMSTRONE_CONFIG_MPU6050_GYRO_ZOUT_H,
+            HAMSTRONE_CONFIG_MPU6050_TEMP_OUT_H,
+        }};
     int errcnt;
 
-    if (I2CWriteSingle(HAMSTRONE_GLOBAL_IMU_PORT, HAMSTRONE_CONFIG_I2C_ADDRESS_MPU6050, HAMSTRONE_CONFIG_MPU6050_PWR_MGMT_1, 0b00000000) < 0) {
+    /* initialize mpu6050 */
+    if (I2CWriteSingle(HAMSTRONE_GLOBAL_IMU_PORT, HAMSTRONE_CONFIG_I2C_ADDRESS_MPU6050, HAMSTRONE_CONFIG_MPU6050_PWR_MGMT_1, 0b00000000) < 0)
+    {
         HAMSTERTONGUE_WriteAndFreeMessage(
             HAMSTRONE_GLOBAL_TELEMETRY_PORT,
             HAMSTERTONGUE_NewFormatStringMessage(
                 HAMSTERTONGUE_MESSAGE_VERB_SIGNAL,
                 HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_I2CREADFAIL,
                 24,
-                "fd=%d pwr_mgmt_1",
-                HAMSTRONE_GLOBAL_IMU_PORT
-            )
-        );
+                "fd=%d mpu6050 pwr_mgmt_1",
+                HAMSTRONE_GLOBAL_IMU_PORT));
     }
     while (1)
     {
@@ -63,30 +65,35 @@ int tskUpdateValue(int argc, char *argv[])
         clock_gettime(CLOCK_MONOTONIC, &currentTs);
         HAMSTRONE_WriteValueStore(0, (uint32_t)(currentTs.tv_sec - startTs.tv_sec));
 
-        /* update mpu6050 */
-        for (int i = 0; i < VALUE_CNT; i++) {
-            errcnt = 0;
-            if (I2CReadWriteSingle(HAMSTRONE_GLOBAL_IMU_PORT, devAddr[i], regAddr[i], &valueh) < 0) errcnt++;
-            if (I2CReadWriteSingle(HAMSTRONE_GLOBAL_IMU_PORT, devAddr[i], regAddr[i]+1, &valuel) < 0) errcnt++;
-            if (errcnt > 0) {
-                HAMSTERTONGUE_WriteAndFreeMessage(
-                    HAMSTRONE_GLOBAL_TELEMETRY_PORT,
-                    HAMSTERTONGUE_NewFormatStringMessage(
-                        HAMSTERTONGUE_MESSAGE_VERB_SIGNAL,
-                        HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_I2CREADFAIL,
-                        24,
-                        "fd=%d errcnt=%d",
-                        HAMSTRONE_GLOBAL_IMU_PORT, errcnt
-                    )
-                );
-                continue;
+        /* update i2c sensor value */
+        for (int s = 0; s < SENSOR_CNT; s++)
+        {
+            for (int i = 0; i < VALUE_CNT; i++)
+            {
+                errcnt = 0;
+                if (I2CReadWriteSingle(HAMSTRONE_GLOBAL_IMU_PORT, devAddr[i], regAddr[s][i], &valueh) < 0)
+                    errcnt++;
+                if (I2CReadWriteSingle(HAMSTRONE_GLOBAL_IMU_PORT, devAddr[i], regAddr[s][i] + 1, &valuel) < 0)
+                    errcnt++;
+                if (errcnt > 0)
+                {
+                    HAMSTERTONGUE_WriteAndFreeMessage(
+                        HAMSTRONE_GLOBAL_TELEMETRY_PORT,
+                        HAMSTERTONGUE_NewFormatStringMessage(
+                            HAMSTERTONGUE_MESSAGE_VERB_SIGNAL,
+                            HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_I2CREADFAIL,
+                            24,
+                            "fd=%d errcnt=%d",
+                            HAMSTRONE_GLOBAL_IMU_PORT, errcnt));
+                    continue;
+                }
+                value = (valueh << 8) | valuel;
+                HAMSTRONE_WriteValueStore(2 + i, (uint32_t)value);
             }
-            value = (valueh << 8) | valuel;
-            HAMSTRONE_WriteValueStore(2 + i, (uint32_t)value);
         }
         usleep(period);
         clock_gettime(CLOCK_MONOTONIC, &taskendTs);
-        // PROPERY TICK RESOULUTION IS SMALL THAN 1000USEC
+        // PROPERY TICK RESOULUTION IS SMALLER THAN 1000USEC
         HAMSTRONE_WriteValueStore(1, (uint32_t)((taskendTs.tv_nsec - currentTs.tv_nsec) / 1000000));
     }
 }

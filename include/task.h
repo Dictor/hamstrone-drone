@@ -15,6 +15,7 @@
 #include "config.h"
 #include "serialize.h"
 #include "value_store.h"
+#include "gps.h"
 
 /* Nuttx header */
 #include "nuttx/i2c/i2c_master.h"
