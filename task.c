@@ -173,6 +173,7 @@ void Split(char *Data_receive)
     for(i=0;i<3;i++)
     	GPS_Type[i]=Data_receive[i+2];
 	Ele.num = Ele_cnt;
+    HAMSTERTONGUE_Debugf("parser calling, elecnt=%d", Ele.num);
 	if(strcmp(GPS_Type,"GGA")==0)
 	{
 		GPS_type_GGA(Data_receive,Ele);	
@@ -192,14 +193,15 @@ int tskParsingGPS(int argc, char *argv[])
     int ret, reterr, i, k=0, Data_len, Data_start, Data_end, Data_split=0, Condition=0;
     struct Ele_Num Ele;
     mqd_t mq = mq_open("/mqgps", O_RDWR);
-    HAMSTERTONGUE_Debugf("msq: %d", mq);
-    HAMSTERTONGUE_Debugf("First\n");
+    HAMSTERTONGUE_Debugf("mq opened : %d", mq);
     while(1) { 
         ret = mq_receive(mq, buf, MSG_BUF_SIZE, NULL);
+        HAMSTERTONGUE_Debugf("mq_received, ret=%d", ret);
         strcat(Assemble_Data,buf);
         Data_len=strlen(Assemble_Data);
         for(i=0;i<Data_len;i++)
         {
+            
         	if(Assemble_Data[i]=='$')
         	{
         		if(Data_split==1)
@@ -215,9 +217,10 @@ int tskParsingGPS(int argc, char *argv[])
 				}
 			}
 		}
+        HAMSTERTONGUE_Debugf("Data_len=%d, Condition=%d", Data_len, Condition);
 		if(Condition==1)
 		{
-            HAMSTERTONGUE_Debugf("Third\n");
+
 			for(i=0; i<Data_end-Data_start;i++)
 				Splited_Data[i]=Assemble_Data[Data_start+i];
 			for(i=0;i<Data_len-Data_end;i++)
@@ -227,13 +230,14 @@ int tskParsingGPS(int argc, char *argv[])
 			}
 			for(i=Data_len-Data_end;i<Data_len;i++)
 				Assemble_Data[i]='\0';
+            HAMSTERTONGUE_Debugf("Split calling, i=%d", i);
         	Split(Splited_Data);
+            usleep(1000000); 
 		}
         HAMSTERTONGUE_Debugf("Second\n");
 		Data_split=0;
 		Condition=0;
 		k=0;
-        usleep(5000000); 
     } 
 }
 
