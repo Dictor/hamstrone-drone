@@ -15,9 +15,9 @@ void GPS_type(char * dataReceive, struct Ele_Num gpsType, char * type)
 			if(i==5||i==6||i==7||i==9)
 			{
 				for(j=gpsType.Element[i];j<gpsType.Element[i+1]-1;j++)
-					printf("%c", dataReceive[j]);
+					HAMSTERTONGUE_Debugf("%c", dataReceive[j]);
 			}
-			printf("\n");
+			HAMSTERTONGUE_Debugf("\n");
 		}
 	}
 	else if(strcmp(type,"GLL")==0 && commaCnt==7)
@@ -27,13 +27,13 @@ void GPS_type(char * dataReceive, struct Ele_Num gpsType, char * type)
 			if(i==1||i==2||i==3||i==4)
 			{
 				for(j=gpsType.Element[i];j<gpsType.Element[i+1]-1;j++)
-					printf("%c", dataReceive[j]);
+					HAMSTERTONGUE_Debugf("%c", dataReceive[j]);
 			}
-			printf("\n");
+			HAMSTERTONGUE_Debugf("\n");
 		}
 	}
 	else
-		printf("Data was damaged\n");
+		HAMSTERTONGUE_Debugf("Data was damaged\n");
 }
 
 void Split(char *dataReceive)
