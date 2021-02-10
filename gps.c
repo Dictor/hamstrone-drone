@@ -38,7 +38,7 @@ void GPS_type(char * dataReceive, struct Ele_Num gpsType, char * type)
 
 void Split(char *dataReceive)
 {
-    int dataCnt = 0, eleCnt = 1, i=0, start, len=0;
+    int dataCnt = 0, eleCnt = 1, i=0, len=0;
     char gpsType[4];
     struct Ele_Num Ele;
     Ele.Element[0]=0;
