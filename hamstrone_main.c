@@ -47,7 +47,7 @@ int hamstrone_main(int argc, FAR char *argv[])
             HAMSTRONE_CONFIG_I2CPORT1_PATH, strerror(-currentErrno), currentErrno));
     return -1;
   }
-
+  
   /* Initialize telemetry value store */
   HAMSTRONE_InitValueStore(HAMSTRONE_CONFIG_VALUE_SIZE);
 
@@ -69,11 +69,7 @@ int hamstrone_main(int argc, FAR char *argv[])
             strerror(currentErrno), currentErrno));
     return -1;
   }
-  mq_send(mq, "$GPGGA,114455.532,3735.0079,N,1", 32, 0);
-  mq_send(mq, "2701.6446,E,1,03,7.9,48.8,M,198", 32, 0);
-  mq_send(mq, ".6,M,0.0,0000*4$1,2", 20, 0);
-  HAMSTERTONGUE_Debugf("mq msg sent");
-
+  
   /* Start tasks */
   task_create("tskTransmitValue", 100, 2048, &tskTransmitValue, NULL);
   task_create("tskUpdateValue", 100, 2048, &tskUpdateValue, NULL);

@@ -71,9 +71,9 @@ int tskUpdateValue(int argc, char *argv[])
             for (int i = 0; i < VALUE_CNT; i++)
             {
                 errcnt = 0;
-                if (I2CReadWriteSingle(HAMSTRONE_GLOBAL_IMU_PORT, devAddr[i], regAddr[s][i], &valueh) < 0)
+                if (I2CReadWriteSingle(HAMSTRONE_GLOBAL_IMU_PORT, devAddr[s], regAddr[s][i], &valueh) < 0)
                     errcnt++;
-                if (I2CReadWriteSingle(HAMSTRONE_GLOBAL_IMU_PORT, devAddr[i], regAddr[s][i] + 1, &valuel) < 0)
+                if (I2CReadWriteSingle(HAMSTRONE_GLOBAL_IMU_PORT, devAddr[s], regAddr[s][i] + 1, &valuel) < 0)
                     errcnt++;
                 if (errcnt > 0)
                 {
