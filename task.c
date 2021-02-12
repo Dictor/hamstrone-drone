@@ -103,14 +103,16 @@ int tskParsingGPS(int argc, char *argv[])
 	#define MSG_BUF_SIZE 32
     char buf[MSG_BUF_SIZE];
     char Assemble_Data[100]={0,};
-    int ret, i, k=0, dataLen, dataStart, dataEnd, dataSplit=0, condition=0;
+    int ret, i, k=0, dataLen, dataStart, dataEnd, dataSplit=0, condition=0, rd;
     struct Ele_Num Ele;
-	mqd_t mq = mq_open("/mqgps", O_RDWR);
-    HAMSTERTONGUE_Debugf("mq opened : %d", mq);
+    memset(buf,0x00,32);
     while(1) 
 	{ 
-		ret = mq_receive(mq, buf, MSG_BUF_SIZE, NULL);
-        HAMSTERTONGUE_Debugf("mq_received, ret=%d", ret);
+        rd=read(HAMSTRONE_GLOBAL_GPS_PORT,buf,32);
+        if(rd<0)
+			HAMSTERTONGUE_Debugf("Error\n");
+        else
+            HAMSTERTONGUE_Debugf("%d\n", rd);
         strcat(Assemble_Data,buf);
         Checking(Assemble_Data);
     }
