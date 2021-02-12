@@ -112,47 +112,7 @@ int tskParsingGPS(int argc, char *argv[])
 		ret = mq_receive(mq, buf, MSG_BUF_SIZE, NULL);
         HAMSTERTONGUE_Debugf("mq_received, ret=%d", ret);
         strcat(Assemble_Data,buf);
-        dataLen=strlen(Assemble_Data);
-        char Splited_Data[100]={0,};
-        for(i=0;i<dataLen;i++)
-        {
-        	if(Assemble_Data[i]=='$')
-        	{
-        		if(dataSplit==1)
-        		{
-        			dataEnd=i;
-        			condition=1;
-        			break;
-				}
-				else
-				{
-					dataSplit=1;
-					dataStart=i+1;
-				}
-			}
-		}
-		HAMSTERTONGUE_Debugf("dataLen=%d, condition=%d", dataLen, condition);
-		if(condition==1)
-		{
-			for(i=0; i<dataEnd-dataStart;i++)
-				Splited_Data[i]=Assemble_Data[dataStart+i];
-			for(i=0;i<dataLen;i++)
-			{
-				if(i<dataLen-dataEnd)
-				{
-					Assemble_Data[i]=Assemble_Data[dataEnd+k];
-					k++;
-				}
-				else
-					Assemble_Data[i]='\0';
-			}
-        	HAMSTERTONGUE_Debugf("Split calling, i=%d", i);
-        	Split(Splited_Data);
-            usleep(1000000); 
-		}
-		dataSplit=0;
-		condition=0;
-		k=0;
+        Checking(Assemble_Data);
     }
     return 0;
 }
