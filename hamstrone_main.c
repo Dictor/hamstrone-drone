@@ -10,7 +10,7 @@
  * hello_main
  ****************************************************************************/
 
-int HAMSTRONE_GLOBAL_TELEMETRY_PORT, HAMSTRONE_GLOBAL_IMU_PORT;
+int HAMSTRONE_GLOBAL_TELEMETRY_PORT, HAMSTRONE_GLOBAL_GPS_PORT, HAMSTRONE_GLOBAL_IMU_PORT;
 sem_t HAMSTRONE_GLOBAL_TELEMETRY_SEMAPHORE;
 
 int hamstrone_main(int argc, FAR char *argv[])
@@ -48,6 +48,21 @@ int hamstrone_main(int argc, FAR char *argv[])
     return -1;
   }
   
+  HAMSTRONE_GLOBAL_GPS_PORT = open(HAMSTRONE_CONFIG_SERIALPORT2_PATH, O_RDWR);
+  if (HAMSTRONE_GLOBAL_GPS_PORT < 0)
+  {
+    int currentErrno = errno;
+    HAMSTERTONGUE_WriteAndFreeMessage(
+        HAMSTRONE_GLOBAL_TELEMETRY_PORT,
+        HAMSTERTONGUE_NewFormatStringMessage(
+            HAMSTERTONGUE_MESSAGE_VERB_SIGNAL,
+            HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_INITFAIL,
+            48,
+            "%s,gps_port,errno=%s=%d",
+            HAMSTRONE_GLOBAL_GPS_PORT, strerror(-currentErrno), currentErrno));
+    return -1;
+  }
+
   /* Initialize telemetry value store */
   HAMSTRONE_InitValueStore(HAMSTRONE_CONFIG_VALUE_SIZE);
 

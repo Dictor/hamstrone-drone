@@ -16,6 +16,7 @@
 #include <mqueue.h>
 
 extern int HAMSTRONE_GLOBAL_TELEMETRY_PORT;
+extern int HAMSTRONE_GLOBAL_GPS_PORT;
 extern int HAMSTRONE_GLOBAL_IMU_PORT;
 extern sem_t HAMSTRONE_GLOBAL_TELEMETRY_SEMAPHORE;
 int hamstrone_main(int argc, char *argv[]);
