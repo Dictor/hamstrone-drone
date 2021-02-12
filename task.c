@@ -88,7 +88,7 @@ int tskUpdateValue(int argc, char *argv[])
                     continue;
                 }
                 value = (valueh << 8) | valuel;
-                HAMSTRONE_WriteValueStore(2 + i, (uint32_t)value);
+                HAMSTRONE_WriteValueStore(2 + (s * VALUE_CNT) + i, (uint32_t)value);
             }
         }
         usleep(period);
