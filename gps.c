@@ -67,39 +67,49 @@ void Split(char *dataReceive)
 
 void Checking(char * Assemble_Data)
 {
-	int i, k=0, dataLen, dataStart, dataEnd, dataSplit=0, condition=0;
-	char Splited_Data[100]={0,};
-	dataLen=strlen(Assemble_Data);
-	for(i=0;i<dataLen;i++){
-        if(Assemble_Data[i]=='$'){
-        	if(dataSplit==1){
-        		dataEnd=i;
-        		condition=1;
-        		break;
+	while(1)
+	{
+		int dataLen=strlen(Assemble_Data);
+		if(dataLen<60)
+			break;
+		else
+		{
+			int i, k=0, dataStart, dataEnd, dataSplit=0, condition=0;
+			char Splited_Data[100]={0,};
+			for(i=0;i<dataLen;i++)
+			{
+        		if(Assemble_Data[i]=='$'){
+        			if(dataSplit==1){
+        				dataEnd=i;
+        				condition=1;
+        				break;
+					}
+					else{
+						dataSplit=1;
+						dataStart=i+1;
+					}
+				}
 			}
-			else{
-				dataSplit=1;
-				dataStart=i+1;
+			HAMSTERTONGUE_Debugf("dataLen=%d, condition=%d", dataLen, condition);
+			if(condition==1)
+			{
+				for(i=0; i<dataEnd-dataStart;i++)
+					Splited_Data[i]=Assemble_Data[dataStart+i];
+				for(i=0;i<dataLen;i++){
+					if(i<dataLen-dataEnd){
+						Assemble_Data[i]=Assemble_Data[dataEnd+k];
+						k++;
+					}
+					else
+						Assemble_Data[i]='\0';
+				}
+				HAMSTERTONGUE_Debugf("second %s\n", Assemble_Data);
+				HAMSTERTONGUE_Debugf("third %s\n", Splited_Data);
+        		Split(Splited_Data);
 			}
+			dataSplit=0;
+			condition=0;
+			k=0;	
 		}
 	}
-	HAMSTERTONGUE_Debugf("dataLen=%d, condition=%d", dataLen, condition);
-	if(condition==1){
-		for(i=0; i<dataEnd-dataStart;i++)
-			Splited_Data[i]=Assemble_Data[dataStart+i];
-		for(i=0;i<dataLen;i++){
-			if(i<dataLen-dataEnd){
-				Assemble_Data[i]=Assemble_Data[dataEnd+k];
-				k++;
-			}
-			else
-				Assemble_Data[i]='\0';
-		}
-        HAMSTERTONGUE_Debugf("Split calling, i=%d", i);
-        Split(Splited_Data);
-        usleep(1000000); 
-	}
-	dataSplit=0;
-	condition=0;
-	k=0;
 }

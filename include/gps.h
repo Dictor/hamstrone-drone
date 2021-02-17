@@ -1,6 +1,6 @@
 #include <string.h>
 #include "hamster_tongue.h"
-
+//#include "hamstrone_main.h"
 struct Ele_Num {
     int Element[50];
     int num;
