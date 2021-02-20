@@ -102,21 +102,17 @@ int tskParsingGPS(int argc, char *argv[])
 {
 	#define MSG_BUF_SIZE 32
     char buf[MSG_BUF_SIZE];
-    int rd;
+    int rd, assembleCnt=0;
     char *Assemble_Data[200]={0,};
     struct Ele_Num Ele;
     memset(buf,0x00,32);
-    while(1) 
+    while(1)
 	{
         rd=read(HAMSTRONE_GLOBAL_GPS_PORT,buf,32);
-        if(rd<0)
-			HAMSTERTONGUE_Debugf("Error\n");
-        else
-            HAMSTERTONGUE_Debugf("%d\n", rd);
-        HAMSTERTONGUE_Debugf("zero %s\n", buf);
         strcat(Assemble_Data,buf);
-        HAMSTERTONGUE_Debugf("first %s\n", Assemble_Data);
-        Checking(Assemble_Data);
+        HAMSTRONE_WriteValueStore(11, (uint32_t)1);
+        assembleCnt=Checking(Assemble_Data, assembleCnt);
+        HAMSTRONE_WriteValueStore(11, (uint32_t)assembleCnt);
         usleep(200000);
     }
     return 0;

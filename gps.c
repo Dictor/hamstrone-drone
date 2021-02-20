@@ -1,83 +1,146 @@
 #include "include/gps.h"
 
-void GPS_type(char * dataReceive, struct Ele_Num gpsType, char * type)
+int GPS_type(char * dataReceive, struct Ele_Num gpsType, char * type, int assembleCnt)
 {
 	int commaCnt=0, i, j;
-	for(i=0;i<strlen(dataReceive);i++)
-	{
+	double convert;
+	for(i=0;i<strlen(dataReceive);i++){
 		if(dataReceive[i]==',')
 			commaCnt++;	
 	}
-	if(strcmp(type,"GGA")==0 && commaCnt==14)
-	{
-		for(i=0;i<gpsType.num-1;i++)
-		{
-			if(i==5||i==6||i==7||i==9)
-			{
-				for(j=gpsType.Element[i];j<gpsType.Element[i+1]-1;j++)
-					HAMSTERTONGUE_Debugf("%c", dataReceive[j]);
+	if(strcmp(type,"GGA")==0 && commaCnt==14){
+		for(i=0;i<gpsType.num-1;i++){
+			int k=0;
+			char assembleData[15]={0,};
+			if(i==2){//Latitude
+				for(j=gpsType.Element[i];j<gpsType.Element[i+1]-1;j++){
+					assembleData[k]=dataReceive[j];
+					k++;
+				}
+				convert=atof(assembleData);
+				convert*=1000;
+				convert=(int)convert;
+				HAMSTRONE_WriteValueStore(12, (uint32_t)convert);
+				HAMSTRONE_WriteValueStore(15, (uint32_t)1);
 			}
-			HAMSTERTONGUE_Debugf("\n");
+			else if(i==4){//Longitude
+				for(j=gpsType.Element[i];j<gpsType.Element[i+1]-1;j++){
+					assembleData[k]=dataReceive[j];
+					k++;
+				}
+				convert=atof(assembleData);
+				convert*=1000;
+				convert=(int)convert;
+				HAMSTRONE_WriteValueStore(13, (uint32_t)convert);
+				HAMSTRONE_WriteValueStore(15, (uint32_t)2);
+			}
+			else if(i==7){//Number of satellites used for calculation
+				for(j=gpsType.Element[i];j<gpsType.Element[i+1]-1;j++){
+					assembleData[k]=dataReceive[j];
+					k++;
+				}
+				convert=atof(assembleData);
+				convert=(int)convert;
+				HAMSTRONE_WriteValueStore(14, (uint32_t)convert);
+				HAMSTRONE_WriteValueStore(15, (uint32_t)3);
+			}
+			/*else if(i==8){//HDOP
+				for(j=gpsType.Element[i];j<gpsType.Element[i+1]-1;j++){
+					assembleData[k]=dataReceive[j];
+					k++;
+				}
+				convert=atof(assembleData);
+				convert*=10;
+				convert=(int)convert;
+				HAMSTRONE_WriteValueStore(15, (uint32_t)convert);
+			}*/
 		}
+		assembleCnt++;
 	}
 	else if(strcmp(type,"GLL")==0 && commaCnt==7)
 	{
 		for(i=0;i<gpsType.num-1;i++)
 		{
-			if(i==1||i==2||i==3||i==4)
-			{
-				for(j=gpsType.Element[i];j<gpsType.Element[i+1]-1;j++)
-					HAMSTERTONGUE_Debugf("%c", dataReceive[j]);
+			char assembleData[15]={0,};
+			int k=0;
+			if(i==5){//UTC Time
+				for(j=gpsType.Element[i];j<gpsType.Element[i+1]-1;j++){
+					assembleData[k]=dataReceive[j];
+					k++;
+				}
+				convert=atof(assembleData);
+				convert*=10;
+				convert=(int)convert;
+				HAMSTRONE_WriteValueStore(12, (uint32_t)1);
+				HAMSTRONE_WriteValueStore(13, (uint32_t)1);
+				HAMSTRONE_WriteValueStore(14, (uint32_t)1);
+				HAMSTRONE_WriteValueStore(15, (uint32_t)convert);
 			}
-			HAMSTERTONGUE_Debugf("\n");
 		}
+		assembleCnt++;
 	}
-	else
-		HAMSTERTONGUE_Debugf("Data was damaged\n");
+	return assembleCnt;
 }
 
-void Split(char *dataReceive)
+int Split(char *Receive, int assembleCnt)
 {
     int dataCnt = 0, eleCnt = 1, i=0, len=0;
     char gpsType[4];
     struct Ele_Num Ele;
     Ele.Element[0]=0;
-    while (1)
-    {
-        if (dataReceive[dataCnt] == ',')
-        {
+    while (1){
+        if (Receive[dataCnt] == ','){
             Ele.Element[eleCnt] = dataCnt + 1;
             eleCnt++;
-            if(dataReceive[dataCnt+1]==',')
-            	dataCnt++;
         }
-		if(dataCnt==2 || dataCnt==3 || dataCnt==4)
-		{
-			gpsType[i]=dataReceive[dataCnt];
+		if(dataCnt==2 || dataCnt==3 || dataCnt==4){
+			gpsType[i]=Receive[dataCnt];
 			i++;
 		}
         len++;
-        if(len==strlen(dataReceive))
+        if(len==strlen(Receive))
         	break;
         dataCnt++;
+		HAMSTRONE_WriteValueStore(13, (uint32_t)3);
     }
 	Ele.num = eleCnt;
-	GPS_type(dataReceive,Ele,gpsType);
+	assembleCnt=GPS_type(Receive,Ele,gpsType,assembleCnt);
+	return assembleCnt;
 }
 
-void Checking(char * Assemble_Data)
+int Insert_Zero(char *dataReceive, int assembleCnt)
 {
+	char insert[100]={0,};
+	int i=0, len=0, dataCnt=0;
 	while(1)
 	{
-		int dataLen=strlen(Assemble_Data);
-		if(dataLen<60)
-			break;
+		if (((dataReceive[dataCnt] == ',') && (dataReceive[dataCnt+1]==','))||((dataReceive[dataCnt] == ',') && (dataReceive[dataCnt+1]=='*'))){
+			insert[i]=dataReceive[dataCnt];
+			i++;
+			insert[i]='0';
+        }
 		else
-		{
+			insert[i]=dataReceive[dataCnt];
+		len++;
+		if(len==strlen(dataReceive))
+        	break;
+		i++;
+		dataCnt++;
+	}
+	assembleCnt=Split(insert, assembleCnt);
+	return assembleCnt;
+}
+
+int Checking(char * Assemble_Data, int assembleCnt)
+{
+	while(1){
+		int dataLen=strlen(Assemble_Data);
+		if(dataLen<67)
+			break;
+		else{
 			int i, k=0, dataStart, dataEnd, dataSplit=0, condition=0;
 			char Splited_Data[100]={0,};
-			for(i=0;i<dataLen;i++)
-			{
+			for(i=0;i<dataLen;i++){
         		if(Assemble_Data[i]=='$'){
         			if(dataSplit==1){
         				dataEnd=i;
@@ -90,9 +153,7 @@ void Checking(char * Assemble_Data)
 					}
 				}
 			}
-			HAMSTERTONGUE_Debugf("dataLen=%d, condition=%d", dataLen, condition);
-			if(condition==1)
-			{
+			if(condition==1){
 				for(i=0; i<dataEnd-dataStart;i++)
 					Splited_Data[i]=Assemble_Data[dataStart+i];
 				for(i=0;i<dataLen;i++){
@@ -103,13 +164,13 @@ void Checking(char * Assemble_Data)
 					else
 						Assemble_Data[i]='\0';
 				}
-				HAMSTERTONGUE_Debugf("second %s\n", Assemble_Data);
-				HAMSTERTONGUE_Debugf("third %s\n", Splited_Data);
-        		Split(Splited_Data);
+        		assembleCnt=Insert_Zero(Splited_Data, assembleCnt);
 			}
 			dataSplit=0;
 			condition=0;
-			k=0;	
+			k=0;
 		}
+		HAMSTRONE_WriteValueStore(12, (uint32_t)2);
 	}
+	return assembleCnt;
 }
