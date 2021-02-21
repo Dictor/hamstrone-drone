@@ -29,7 +29,7 @@ int tskUpdateValue(int argc, char *argv[])
     clock_gettime(CLOCK_MONOTONIC, &startTs);
 
 #define SENSOR_CNT 1
-#define VALUE_CNT 4
+#define VALUE_CNT 7
     uint8_t valuel, valueh;
     uint16_t value;
     uint8_t devAddr[SENSOR_CNT] = {

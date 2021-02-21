@@ -38,7 +38,9 @@ HAMSTERTONGUE_Message *HAMSTERTONGUE_NewFormatStringMessage(uint8_t verb, uint8_
 	va_start(vl, format);
 	vsnprintf(str, bufSize, format, vl);
 	va_end(vl);
-	return HAMSTERTONGUE_NewStringMessage(verb, noun, str);
+	HAMSTERTONGUE_Message *msg = HAMSTERTONGUE_NewStringMessage(verb, noun, str);
+	free(str);
+	return msg;
 }
 
 uint16_t HAMSTERTONGUE_GetMessageLength(HAMSTERTONGUE_Message *msg)
@@ -86,5 +88,6 @@ ssize_t HAMSTERTONGUE_Debugf(char *format, ...)
 	vsnprintf(str, bufSize, format, vl);
 	va_end(vl);
 	HAMSTERTONGUE_Message* msg = HAMSTERTONGUE_NewStringMessage(HAMSTERTONGUE_MESSAGE_VERB_SIGNAL, HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_DEBUG, str);
+	free(str);
 	return HAMSTERTONGUE_WriteAndFreeMessage(defaultFd, msg);
 }
