@@ -8,11 +8,15 @@ int GPS_type(char * dataReceive, struct Ele_Num gpsType, char * type, int assemb
 		if(dataReceive[i]==',')
 			commaCnt++;	
 	}
+	HAMSTRONE_WriteValueStore(13, (uint32_t)50);
+	HAMSTERTONGUE_Debugf("%s\n", dataReceive);
 	if(strcmp(type,"GGA")==0 && commaCnt==14){
+		HAMSTRONE_WriteValueStore(13, (uint32_t)100);
 		for(i=0;i<gpsType.num-1;i++){
 			int k=0;
 			char assembleData[15]={0,};
 			if(i==2){//Latitude
+				HAMSTRONE_WriteValueStore(14, (uint32_t)200);
 				for(j=gpsType.Element[i];j<gpsType.Element[i+1]-1;j++){
 					assembleData[k]=dataReceive[j];
 					k++;
@@ -20,10 +24,11 @@ int GPS_type(char * dataReceive, struct Ele_Num gpsType, char * type, int assemb
 				convert=atof(assembleData);
 				convert*=1000;
 				convert=(int)convert;
-				HAMSTRONE_WriteValueStore(12, (uint32_t)convert);
-				HAMSTRONE_WriteValueStore(15, (uint32_t)1);
+				//HAMSTRONE_WriteValueStore(12, (uint32_t)convert);
+				//HAMSTRONE_WriteValueStore(15, (uint32_t)1);
 			}
 			else if(i==4){//Longitude
+				HAMSTRONE_WriteValueStore(14, (uint32_t)300);
 				for(j=gpsType.Element[i];j<gpsType.Element[i+1]-1;j++){
 					assembleData[k]=dataReceive[j];
 					k++;
@@ -31,18 +36,19 @@ int GPS_type(char * dataReceive, struct Ele_Num gpsType, char * type, int assemb
 				convert=atof(assembleData);
 				convert*=1000;
 				convert=(int)convert;
-				HAMSTRONE_WriteValueStore(13, (uint32_t)convert);
-				HAMSTRONE_WriteValueStore(15, (uint32_t)2);
+				//HAMSTRONE_WriteValueStore(13, (uint32_t)convert);
+				//HAMSTRONE_WriteValueStore(15, (uint32_t)2);
 			}
 			else if(i==7){//Number of satellites used for calculation
+				HAMSTRONE_WriteValueStore(15, (uint32_t)400);
 				for(j=gpsType.Element[i];j<gpsType.Element[i+1]-1;j++){
 					assembleData[k]=dataReceive[j];
 					k++;
 				}
 				convert=atof(assembleData);
 				convert=(int)convert;
-				HAMSTRONE_WriteValueStore(14, (uint32_t)convert);
-				HAMSTRONE_WriteValueStore(15, (uint32_t)3);
+				//HAMSTRONE_WriteValueStore(14, (uint32_t)convert);
+				//HAMSTRONE_WriteValueStore(15, (uint32_t)3);
 			}
 			/*else if(i==8){//HDOP
 				for(j=gpsType.Element[i];j<gpsType.Element[i+1]-1;j++){
@@ -55,12 +61,13 @@ int GPS_type(char * dataReceive, struct Ele_Num gpsType, char * type, int assemb
 				HAMSTRONE_WriteValueStore(15, (uint32_t)convert);
 			}*/
 		}
-		assembleCnt++;
+		//assembleCnt++;
 	}
 	else if(strcmp(type,"GLL")==0 && commaCnt==7)
 	{
 		for(i=0;i<gpsType.num-1;i++)
 		{
+			HAMSTRONE_WriteValueStore(15, (uint32_t)500);
 			char assembleData[15]={0,};
 			int k=0;
 			if(i==5){//UTC Time
@@ -71,14 +78,15 @@ int GPS_type(char * dataReceive, struct Ele_Num gpsType, char * type, int assemb
 				convert=atof(assembleData);
 				convert*=10;
 				convert=(int)convert;
-				HAMSTRONE_WriteValueStore(12, (uint32_t)1);
-				HAMSTRONE_WriteValueStore(13, (uint32_t)1);
-				HAMSTRONE_WriteValueStore(14, (uint32_t)1);
-				HAMSTRONE_WriteValueStore(15, (uint32_t)convert);
+				//HAMSTRONE_WriteValueStore(12, (uint32_t)1);
+				//HAMSTRONE_WriteValueStore(13, (uint32_t)1);
+				//HAMSTRONE_WriteValueStore(14, (uint32_t)1);
+				//HAMSTRONE_WriteValueStore(15, (uint32_t)convert);
 			}
 		}
-		assembleCnt++;
+		//assembleCnt++;
 	}
+	assembleCnt++;
 	return assembleCnt;
 }
 
@@ -101,7 +109,6 @@ int Split(char *Receive, int assembleCnt)
         if(len==strlen(Receive))
         	break;
         dataCnt++;
-		HAMSTRONE_WriteValueStore(13, (uint32_t)3);
     }
 	Ele.num = eleCnt;
 	assembleCnt=GPS_type(Receive,Ele,gpsType,assembleCnt);
@@ -170,7 +177,6 @@ int Checking(char * Assemble_Data, int assembleCnt)
 			condition=0;
 			k=0;
 		}
-		HAMSTRONE_WriteValueStore(12, (uint32_t)2);
 	}
 	return assembleCnt;
 }
