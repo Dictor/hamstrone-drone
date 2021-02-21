@@ -117,20 +117,27 @@ int fakeread(int port, char* buf, int size) {
 int tskParsingGPS(int argc, char *argv[])
 {
 	#define MSG_BUF_SIZE 33
-    int rd, assembleCnt=0, i=0;
-    char *Assemble_Data[200]={0,};
+    int rd, assembleCnt=0, i=0, bufLen=0, assembleLen=0;
+    char Assemble_Data[200]={0,};
     struct Ele_Num Ele;
     while(1)
 	{
+        int assembleNum=0;
         char buf[MSG_BUF_SIZE];
         memset(buf,0x00,33);
         //rd = read(HAMSTRONE_GLOBAL_GPS_PORT, buf, 32);
         rd = fakeread(HAMSTRONE_GLOBAL_GPS_PORT, buf, 32);
+        //bufLen=strlen(buf);
+        //assembleLen=strlen(Assemble_Data);
+        /*for(i=0;i<bufLen;i++)
+        {
+            Assemble_Data[assembleLen]=buf[i];
+            assembleLen++;
+        }*/
         strcat(Assemble_Data,buf);
-        HAMSTRONE_WriteValueStore(12, (uint32_t)i);
-        i++;
+        HAMSTERTONGUE_Debugf("first %s\n", Assemble_Data);
         assembleCnt=Checking(Assemble_Data, assembleCnt);
-        HAMSTRONE_WriteValueStore(11, (uint32_t)assembleCnt);
+        HAMSTRONE_WriteValueStore(9, (uint32_t)assembleCnt);
         usleep(200000);
     }
     return 0;
