@@ -8,7 +8,7 @@ int GPS_type(char * dataReceive, struct Ele_Num gpsType, char * type, int assemb
 		if(dataReceive[i]==',')
 			commaCnt++;	
 	}
-	HAMSTERTONGUE_Debugf("second %s\n", dataReceive);
+	HAMSTERTONGUE_Debugf("%s\n", dataReceive);
 	if(strcmp(type,"GGA")==0 && commaCnt==14){
 		assembleCnt++;
 		for(i=0;i<gpsType.num-1;i++){
