@@ -14,24 +14,21 @@ int GPS_type(char * dataReceive, struct Ele_Num gpsType, int dataLen, int assemb
 		for(i=0;i<gpsType.num-1;i++){
 			int k=0;
 			char assembleData[15]={0,};
-			if(i==1 || i==2 || i==3){// UTC, Latitude, Longitude
+			if(i==1 || i==3 || i==5){
 				for(j=gpsType.Element[i];j<gpsType.Element[i+1]-1;j++){
 					assembleData[k]=dataReceive[j];
 					k++;
 				}
 				convert=atof(assembleData);
-				if(i==1)
-				{
+				if(i==1){// UTC
 					convert*=(int)100;
 					HAMSTRONE_WriteValueStore(11, (uint32_t)convert);
 				}
-				else if(i==3)
-				{
+				else if(i==3){// Latitude
 					convert*=(int)100000;
 					HAMSTRONE_WriteValueStore(12, (uint32_t)convert);
 				}
-				else if(i==5)
-				{
+				else if(i==5){// Longitude
 					convert*=(int)100000;
 					HAMSTRONE_WriteValueStore(13, (uint32_t)convert);
 				}
@@ -43,19 +40,17 @@ int GPS_type(char * dataReceive, struct Ele_Num gpsType, int dataLen, int assemb
 		for(i=0;i<gpsType.num-1;i++){
 			int k=0;
 			char assembleData[15]={0,};
-			if(i==7 || i==8){// Number of Satellites used for Calculation, HDOP
+			if(i==7 || i==8){
 				for(j=gpsType.Element[i];j<gpsType.Element[i+1]-1;j++){
 					assembleData[k]=dataReceive[j];
 					k++;
 				}
 				convert=atof(assembleData);
-				if(i==7)
-				{
+				if(i==7){// Number of Satellites used for Calculation
 					convert*=(int)100;
 					HAMSTRONE_WriteValueStore(14, (uint32_t)convert);
 				}
-				else if(i==8)
-				{
+				else if(i==8){// HDOP
 					convert*=(int)100;
 					HAMSTRONE_WriteValueStore(15, (uint32_t)convert);
 				}
@@ -67,18 +62,15 @@ int GPS_type(char * dataReceive, struct Ele_Num gpsType, int dataLen, int assemb
 
 int Split(char *Receive, int insertLen, int assembleCnt)
 {
-    int dataCnt = 0, eleCnt = 1, len=0;
+    int splitCnt = 0, eleCnt = 1, splitlen=0;
     struct Ele_Num Ele;
     Ele.Element[0]=0;
-    while (1){
-        if (Receive[dataCnt] == ','){
-            Ele.Element[eleCnt] = dataCnt + 1;
+    for(splitlen=0;splitlen<insertLen;splitlen++){
+        if (Receive[splitCnt] == ','){
+            Ele.Element[eleCnt] = splitCnt + 1;
             eleCnt++;
         }
-        len++;
-        if(len==insertLen)
-        	break;
-        dataCnt++;
+        splitCnt++;
     }
 	Ele.num = eleCnt;
 	assembleCnt=GPS_type(Receive,Ele,insertLen,assembleCnt);
@@ -89,8 +81,7 @@ int Insert_Zero(char *dataReceive, int splitLen, int assembleCnt)
 {
 	char insert[200]={0,};
 	int i=0, len=0, dataCnt=0, insertLen=0;
-	while(1)
-	{
+	for(len=0;len<splitLen;len++){
 		if ((*(dataReceive+dataCnt) == ',') && ((*(dataReceive+dataCnt+1)==',')||(*(dataReceive+dataCnt+1)=='*'))){
 			insert[i]=*(dataReceive+dataCnt);
 			i++;
@@ -98,9 +89,6 @@ int Insert_Zero(char *dataReceive, int splitLen, int assembleCnt)
         }
 		else
 			insert[i]=*(dataReceive+dataCnt);
-		len++;
-		if(len==splitLen)
-        	break;
 		i++;
 		dataCnt++;
 	}
