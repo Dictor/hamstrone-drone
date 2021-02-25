@@ -98,22 +98,6 @@ int tskUpdateValue(int argc, char *argv[])
     }
 }
  
-/*char nmeabuf[5][32] = {
-   "$GPGGA,141113.999,3730.0308,N,12",
-   "655.2369,E,1,06,1.7,98.9,M,,,,00",
-   "00*3E\r\n$GPGGA,141113.999,3730.03",
-   "08,N,12655.2369,E,1,06,1.7,98.9,",
-   "M,,,,0000*3E\r\n$GPGGA,141113.999,"
-};
-int nmeacnt = 0;
-
-int fakeread(int port, char* buf, int size) {
-    if (nmeacnt >= 5) nmeacnt = 0;
-    memcpy(buf, nmeabuf[nmeacnt], 32); 
-    nmeacnt++;
-    return 32;
-}*/
-
 int tskParsingGPS(int argc, char *argv[])
 {
 	#define MSG_BUF_SIZE 33
@@ -125,7 +109,6 @@ int tskParsingGPS(int argc, char *argv[])
         char buf[MSG_BUF_SIZE];
         memset(buf,0x00,33);
         rd = read(HAMSTRONE_GLOBAL_GPS_PORT, buf, 32);
-        //rd = fakeread(HAMSTRONE_GLOBAL_GPS_PORT, buf, 32);
         bufLen=strlen(buf);
         assembleLen=strlen(Assemble_Data);
         for(i=0;i<bufLen;i++)
@@ -133,7 +116,6 @@ int tskParsingGPS(int argc, char *argv[])
             Assemble_Data[assembleLen]=buf[i];
             assembleLen++;
         }
-        //strcat(Assemble_Data,buf);
         Len=strlen(Assemble_Data);
         assembleCnt=Checking(Assemble_Data, Len, assembleCnt);
         HAMSTRONE_WriteValueStore(9, (uint32_t)assembleCnt);

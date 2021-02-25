@@ -8,7 +8,7 @@ int GPS_type(char * dataReceive, struct Ele_Num gpsType, int dataLen, int assemb
 		if(dataReceive[i]==',')
 			commaCnt++;	
 	}
-	//HAMSTERTONGUE_Debugf("%s\n", dataReceive);
+	HAMSTERTONGUE_Debugf("%s\n", dataReceive);
 	if(dataReceive[2]=='R' && dataReceive[3]=='M' && dataReceive[4]=='C' && commaCnt==12){
 		assembleCnt++;
 		for(i=0;i<gpsType.num-1;i++){
@@ -47,7 +47,7 @@ int GPS_type(char * dataReceive, struct Ele_Num gpsType, int dataLen, int assemb
 				}
 				convert=atof(assembleData);
 				if(i==7){// Number of Satellites used for Calculation
-					convert*=(int)100;
+					convert=(int)convert;
 					HAMSTRONE_WriteValueStore(14, (uint32_t)convert);
 				}
 				else if(i==8){// HDOP
