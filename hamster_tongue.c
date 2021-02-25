@@ -75,6 +75,7 @@ ssize_t HAMSTERTONGUE_WriteMessage(int fd, HAMSTERTONGUE_Message *msg)
 ssize_t HAMSTERTONGUE_WriteAndFreeMessage(int fd, HAMSTERTONGUE_Message *msg)
 {
 	ssize_t res = HAMSTERTONGUE_WriteMessage(fd, msg);
+	free(msg->Payload);
 	free(msg);
 	return res;
 }
