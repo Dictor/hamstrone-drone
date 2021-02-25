@@ -4,17 +4,13 @@ int tskTransmitValue(int argc, char *argv[])
 {
     int period = atoi(argv[1]);
     if (period <= 0)
-        period = 200000; //200ms
-    HAMSTERTONGUE_Message *msg = HAMSTERTONGUE_NewMessage(HAMSTERTONGUE_MESSAGE_VERB_VALUE, 0, sizeof(HAMSTRONE_CONFIG_VALUE_TYPE));
+        period = 500000; //500ms
+    HAMSTERTONGUE_Message *msg = HAMSTERTONGUE_NewMessage(HAMSTERTONGUE_MESSAGE_VERB_VALUE, 0, sizeof(HAMSTRONE_CONFIG_VALUE_TYPE) * HAMSTRONE_CONFIG_VALUE_SIZE);
 
     while (1)
     {
-        for (int i = 0; i < HAMSTRONE_CONFIG_VALUE_SIZE; i++)
-        {
-            msg->Noun = i;
-            HAMSTRONE_Serialize32(HAMSTRONE_ReadValueStore(i), msg->Payload, 0);
-            HAMSTERTONGUE_WriteMessage(HAMSTRONE_GLOBAL_TELEMETRY_PORT, msg);
-        }
+        HAMSTRONE_Serialize32Array(HAMSTRONE_GetValueStorePointer(), msg->Payload, 0);
+        HAMSTERTONGUE_WriteMessage(HAMSTRONE_GLOBAL_TELEMETRY_PORT, msg);
         usleep(period);
     }
 }
