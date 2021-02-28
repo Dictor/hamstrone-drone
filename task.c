@@ -101,14 +101,13 @@ int tskUpdateValue(int argc, char *argv[])
 int tskParsingGPS(int argc, char *argv[])
 {
 	#define MSG_BUF_SIZE 33
-    int rd, assembleCnt=0, i=0, bufLen=0, assembleLen=0, Len=0;
+    int assembleCnt=0, i=0, bufLen=0, assembleLen=0, Len=0;
     char Assemble_Data[200]={0,};
-    struct Ele_Num Ele;
+    char buf[MSG_BUF_SIZE];
     while(1)
 	{
-        char buf[MSG_BUF_SIZE];
         memset(buf,0x00,33);
-        rd = read(HAMSTRONE_GLOBAL_GPS_PORT, buf, 32);
+        read(HAMSTRONE_GLOBAL_GPS_PORT, buf, 32);
         bufLen=strlen(buf);
         assembleLen=strlen(Assemble_Data);
         for(i=0;i<bufLen;i++)
