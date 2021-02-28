@@ -15,6 +15,7 @@ sem_t HAMSTRONE_GLOBAL_TELEMETRY_SEMAPHORE;
 
 int hamstrone_main(int argc, FAR char *argv[])
 {
+  /* Initailize telemetry serial port lock semaphore */
   if (sem_init(&HAMSTRONE_GLOBAL_TELEMETRY_SEMAPHORE, 0, 1) < 0)
   {
     printf("fatal error: sem init fail\n");
@@ -30,6 +31,8 @@ int hamstrone_main(int argc, FAR char *argv[])
     return -1;
   }
   HAMSTERTONGUE_SetDefaultFile(HAMSTRONE_GLOBAL_TELEMETRY_PORT);
+
+  /* nsh initialize for mounting i2c device */
   nsh_initialize();
 
   /* Initialize i2c port */
@@ -37,54 +40,25 @@ int hamstrone_main(int argc, FAR char *argv[])
   if (HAMSTRONE_GLOBAL_IMU_PORT < 0)
   {
     int currentErrno = errno;
-    HAMSTERTONGUE_WriteAndFreeMessage(
-        HAMSTRONE_GLOBAL_TELEMETRY_PORT,
-        HAMSTERTONGUE_NewFormatStringMessage(
-            HAMSTERTONGUE_MESSAGE_VERB_SIGNAL,
-            HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_INITFAIL,
-            48,
-            "%s,i2c,errno=%s=%d",
-            HAMSTRONE_CONFIG_I2CPORT1_PATH, strerror(-currentErrno), currentErrno));
+    HAMSTERTONGUE_InitFailf(
+        "%s,i2c,errno=%s=%d",
+        HAMSTRONE_CONFIG_I2CPORT1_PATH, strerror(currentErrno), currentErrno);
     return -1;
   }
-  
+
   HAMSTRONE_GLOBAL_GPS_PORT = open(HAMSTRONE_CONFIG_SERIALPORT2_PATH, O_RDWR);
   if (HAMSTRONE_GLOBAL_GPS_PORT < 0)
   {
     int currentErrno = errno;
-    HAMSTERTONGUE_WriteAndFreeMessage(
-        HAMSTRONE_GLOBAL_TELEMETRY_PORT,
-        HAMSTERTONGUE_NewFormatStringMessage(
-            HAMSTERTONGUE_MESSAGE_VERB_SIGNAL,
-            HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_INITFAIL,
-            48,
-            "%s,gps_port,errno=%s=%d",
-            HAMSTRONE_GLOBAL_GPS_PORT, strerror(-currentErrno), currentErrno));
+    HAMSTERTONGUE_InitFailf(
+        "%s,gps_port,errno=%s=%d",
+        HAMSTRONE_GLOBAL_GPS_PORT, strerror(currentErrno), currentErrno);
     return -1;
   }
 
   /* Initialize telemetry value store */
   HAMSTRONE_InitValueStore(HAMSTRONE_CONFIG_VALUE_SIZE);
 
-  /* Initialize gps message queue */
-  struct mq_attr mq_opt;
-  mq_opt.mq_maxmsg = 5;
-  mq_opt.mq_msgsize = 32;
-
-  mqd_t mq = mq_open("/mqgps", O_RDWR | O_CREAT, 0777, &mq_opt);
-  if (mq < 0) {
-    int currentErrno = errno;
-    HAMSTERTONGUE_WriteAndFreeMessage(
-        HAMSTRONE_GLOBAL_TELEMETRY_PORT,
-        HAMSTERTONGUE_NewFormatStringMessage(
-            HAMSTERTONGUE_MESSAGE_VERB_SIGNAL,
-            HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_INITFAIL,
-            48,
-            "/mqgps,errno=%s=%d",
-            strerror(currentErrno), currentErrno));
-    return -1;
-  }
-  
   /* Start tasks */
   task_create("tskTransmitValue", 100, 2048, &tskTransmitValue, NULL);
   task_create("tskUpdateValue", 100, 2048, &tskUpdateValue, NULL);

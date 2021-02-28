@@ -15,6 +15,14 @@
 #include <string.h>
 #include <mqueue.h>
 
+#define HAMSTERTONGUE_InitFailf(...)                    \
+    HAMSTERTONGUE_WriteAndFreeMessage(                  \
+        HAMSTRONE_GLOBAL_TELEMETRY_PORT,                \
+        HAMSTERTONGUE_NewFormatStringMessage(           \
+            HAMSTERTONGUE_MESSAGE_VERB_SIGNAL,          \
+            HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_INITFAIL, \
+            48, __VA_ARGS__));
+
 extern int HAMSTRONE_GLOBAL_TELEMETRY_PORT;
 extern int HAMSTRONE_GLOBAL_GPS_PORT;
 extern int HAMSTRONE_GLOBAL_IMU_PORT;
