@@ -95,15 +95,15 @@ int tskUpdateValue(int argc, char *argv[])
         accelYsq = pow(accelY, 2);
         accelZsq = pow(accelZ, 2);
         accelAngX = atan(accelY / sqrt(accelXsq + accelZsq)) * HAMSTRONE_CONFIG_RADIAN_TO_ANGLE;
-        accelAngY = atan(-accelX / sqrt(accelYsq + accelZsq)) * HAMSTRONE_CONFIG_RADIAN_TO_ANGLE;
+        accelAngY = atan(-1 * accelX / sqrt(accelYsq + accelZsq)) * HAMSTRONE_CONFIG_RADIAN_TO_ANGLE;
         gyroAngX += gyroX * HAMSTRONE_CONFIG_MPU6050_GYRO_TIMEDELTA;
         gyroAngY += gyroY * HAMSTRONE_CONFIG_MPU6050_GYRO_TIMEDELTA;
         gyroAngZ += gyroZ * HAMSTRONE_CONFIG_MPU6050_GYRO_TIMEDELTA;
         filterAngX = accelAngX * HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT + (1 - HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT) * gyroAngX;
-        filterAngX = accelAngY * HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT + (1 - HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT) * gyroAngY;
-        HAMSTRONE_WriteValueStore(2, (uint32_t)(filterAngX * 100 + 180));
-        HAMSTRONE_WriteValueStore(3, (uint32_t)(filterAngY * 100 + 180));
-        HAMSTRONE_WriteValueStore(4, (uint32_t)(gyroAngZ * 100 + 180));
+        filterAngY = accelAngY * HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT + (1 - HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT) * gyroAngY;
+        HAMSTRONE_WriteValueStore(2, (uint32_t)(filterAngX * 100 + 18000));
+        HAMSTRONE_WriteValueStore(3, (uint32_t)(filterAngY * 100 + 18000));
+        HAMSTRONE_WriteValueStore(4, (uint32_t)(gyroAngZ * 100 + 18000));
 
         usleep(period);
         clock_gettime(CLOCK_MONOTONIC, &taskendTs);
