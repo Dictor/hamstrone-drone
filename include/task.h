@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <sys/ioctl.h>
 #include <mqueue.h>
+#include <math.h>
 
 /* Hamstrone header */
 #include "hamstrone_main.h"

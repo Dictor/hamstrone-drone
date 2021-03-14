@@ -4,17 +4,13 @@ int tskTransmitValue(int argc, char *argv[])
 {
     int period = atoi(argv[1]);
     if (period <= 0)
-        period = 200000; //200ms
-    HAMSTERTONGUE_Message *msg = HAMSTERTONGUE_NewMessage(HAMSTERTONGUE_MESSAGE_VERB_VALUE, 0, sizeof(HAMSTRONE_CONFIG_VALUE_TYPE));
+        period = 500000; //500ms
+    HAMSTERTONGUE_Message *msg = HAMSTERTONGUE_NewMessage(HAMSTERTONGUE_MESSAGE_VERB_VALUE, 0, sizeof(HAMSTRONE_CONFIG_VALUE_TYPE) * HAMSTRONE_CONFIG_VALUE_SIZE);
 
     while (1)
     {
-        for (int i = 0; i < HAMSTRONE_CONFIG_VALUE_SIZE; i++)
-        {
-            msg->Noun = i;
-            HAMSTRONE_Serialize32(HAMSTRONE_ReadValueStore(i), msg->Payload, 0);
-            HAMSTERTONGUE_WriteMessage(HAMSTRONE_GLOBAL_TELEMETRY_PORT, msg);
-        }
+        HAMSTRONE_Serialize32Array(HAMSTRONE_GetValueStorePointer(), msg->Payload, HAMSTRONE_CONFIG_VALUE_SIZE, 0);
+        HAMSTERTONGUE_WriteMessage(HAMSTRONE_GLOBAL_TELEMETRY_PORT, msg);
         usleep(period);
     }
 }
@@ -28,23 +24,23 @@ int tskUpdateValue(int argc, char *argv[])
     struct timespec startTs, currentTs, taskendTs;
     clock_gettime(CLOCK_MONOTONIC, &startTs);
 
-#define SENSOR_CNT 1
 #define VALUE_CNT 7
-    uint8_t valuel, valueh;
-    uint16_t value;
-    uint8_t devAddr[SENSOR_CNT] = {
-        HAMSTRONE_CONFIG_I2C_ADDRESS_MPU6050,
+    uint8_t regAddr[VALUE_CNT] = {
+        HAMSTRONE_CONFIG_MPU6050_ACCEL_XOUT_H,
+        HAMSTRONE_CONFIG_MPU6050_ACCEL_YOUT_H,
+        HAMSTRONE_CONFIG_MPU6050_ACCEL_ZOUT_H,
+        HAMSTRONE_CONFIG_MPU6050_GYRO_XOUT_H,
+        HAMSTRONE_CONFIG_MPU6050_GYRO_YOUT_H,
+        HAMSTRONE_CONFIG_MPU6050_GYRO_ZOUT_H,
+        HAMSTRONE_CONFIG_MPU6050_TEMP_OUT_H,
     };
-    uint8_t regAddr[SENSOR_CNT][VALUE_CNT] = {
-        {
-            HAMSTRONE_CONFIG_MPU6050_ACCEL_XOUT_H,
-            HAMSTRONE_CONFIG_MPU6050_ACCEL_YOUT_H,
-            HAMSTRONE_CONFIG_MPU6050_ACCEL_ZOUT_H,
-            HAMSTRONE_CONFIG_MPU6050_GYRO_XOUT_H,
-            HAMSTRONE_CONFIG_MPU6050_GYRO_YOUT_H,
-            HAMSTRONE_CONFIG_MPU6050_GYRO_ZOUT_H,
-            HAMSTRONE_CONFIG_MPU6050_TEMP_OUT_H,
-        }};
+    uint8_t valuel, valueh;
+    uint16_t value[VALUE_CNT];
+    double accelX, accelY, accelZ, gyroX, gyroY, gyroZ;
+    double accelXsq, accelYsq, accelZsq, accelAngX, accelAngY;
+    double gyroAngX, gyroAngY, gyroAngZ;
+    double filterAngX, filterAngY;
+
     int errcnt;
 
     /* initialize mpu6050 */
@@ -66,38 +62,56 @@ int tskUpdateValue(int argc, char *argv[])
         HAMSTRONE_WriteValueStore(0, (uint32_t)(currentTs.tv_sec - startTs.tv_sec));
 
         /* update i2c sensor value */
-        for (int s = 0; s < SENSOR_CNT; s++)
+        for (int i = 0; i < VALUE_CNT; i++)
         {
-            for (int i = 0; i < VALUE_CNT; i++)
+            errcnt = 0;
+            if (I2CReadWriteSingle(HAMSTRONE_GLOBAL_IMU_PORT, HAMSTRONE_CONFIG_I2C_ADDRESS_MPU6050, regAddr[i], &valueh) < 0)
+                errcnt++;
+            if (I2CReadWriteSingle(HAMSTRONE_GLOBAL_IMU_PORT, HAMSTRONE_CONFIG_I2C_ADDRESS_MPU6050, regAddr[i] + 1, &valuel) < 0)
+                errcnt++;
+            if (errcnt > 0)
             {
-                errcnt = 0;
-                if (I2CReadWriteSingle(HAMSTRONE_GLOBAL_IMU_PORT, devAddr[s], regAddr[s][i], &valueh) < 0)
-                    errcnt++;
-                if (I2CReadWriteSingle(HAMSTRONE_GLOBAL_IMU_PORT, devAddr[s], regAddr[s][i] + 1, &valuel) < 0)
-                    errcnt++;
-                if (errcnt > 0)
-                {
-                    HAMSTERTONGUE_WriteAndFreeMessage(
-                        HAMSTRONE_GLOBAL_TELEMETRY_PORT,
-                        HAMSTERTONGUE_NewFormatStringMessage(
-                            HAMSTERTONGUE_MESSAGE_VERB_SIGNAL,
-                            HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_I2CREADFAIL,
-                            24,
-                            "fd=%d errcnt=%d",
-                            HAMSTRONE_GLOBAL_IMU_PORT, errcnt));
-                    continue;
-                }
-                value = (valueh << 8) | valuel;
-                HAMSTRONE_WriteValueStore(2 + (s * VALUE_CNT) + i, (uint32_t)value);
+                HAMSTERTONGUE_WriteAndFreeMessage(
+                    HAMSTRONE_GLOBAL_TELEMETRY_PORT,
+                    HAMSTERTONGUE_NewFormatStringMessage(
+                        HAMSTERTONGUE_MESSAGE_VERB_SIGNAL,
+                        HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_I2CREADFAIL,
+                        24,
+                        "fd=%d errcnt=%d",
+                        HAMSTRONE_GLOBAL_IMU_PORT, errcnt));
+                continue;
             }
+            value[i] = (valueh << 8) | valuel;
         }
+
+        /* calculate gyro and accel angle*/
+        accelX = (int16_t)(~value[0] + 1) / HAMSTRONE_CONFIG_MPU6050_ACCEL_COEFFICIENT;
+        accelY = (int16_t)(~value[1] + 1) / HAMSTRONE_CONFIG_MPU6050_ACCEL_COEFFICIENT;
+        accelZ = (int16_t)(~value[2] + 1) / HAMSTRONE_CONFIG_MPU6050_ACCEL_COEFFICIENT;
+        gyroX = (int16_t)(~value[3] + 1) / HAMSTRONE_CONFIG_MPU6050_GYRO_COEFFICIENT;
+        gyroY = (int16_t)(~value[4] + 1) / HAMSTRONE_CONFIG_MPU6050_GYRO_COEFFICIENT;
+        gyroZ = (int16_t)(~value[5] + 1) / HAMSTRONE_CONFIG_MPU6050_GYRO_COEFFICIENT;
+        accelXsq = pow(accelX, 2);
+        accelYsq = pow(accelY, 2);
+        accelZsq = pow(accelZ, 2);
+        accelAngX = atan(accelY / sqrt(accelXsq + accelZsq)) * HAMSTRONE_CONFIG_RADIAN_TO_ANGLE;
+        accelAngY = atan(-accelX / sqrt(accelYsq + accelZsq)) * HAMSTRONE_CONFIG_RADIAN_TO_ANGLE;
+        gyroAngX += gyroX * HAMSTRONE_CONFIG_MPU6050_GYRO_TIMEDELTA;
+        gyroAngY += gyroY * HAMSTRONE_CONFIG_MPU6050_GYRO_TIMEDELTA;
+        gyroAngZ += gyroZ * HAMSTRONE_CONFIG_MPU6050_GYRO_TIMEDELTA;
+        filterAngX = accelAngX * HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT + (1 - HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT) * gyroAngX;
+        filterAngX = accelAngY * HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT + (1 - HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT) * gyroAngY;
+        HAMSTRONE_WriteValueStore(2, (uint32_t)(filterAngX * 100 + 180));
+        HAMSTRONE_WriteValueStore(3, (uint32_t)(filterAngY * 100 + 180));
+        HAMSTRONE_WriteValueStore(4, (uint32_t)(gyroAngZ * 100 + 180));
+
         usleep(period);
         clock_gettime(CLOCK_MONOTONIC, &taskendTs);
         // PROPERY TICK RESOULUTION IS SMALLER THAN 1000USEC
         HAMSTRONE_WriteValueStore(1, (uint32_t)((taskendTs.tv_nsec - currentTs.tv_nsec) / 1000000));
     }
 }
- 
+
 int tskParsingGPS(int argc, char *argv[])
 {
 	#define MSG_BUF_SIZE 33
@@ -112,18 +126,19 @@ int tskParsingGPS(int argc, char *argv[])
         assembleLen=strlen(Assemble_Data);
         for(i=0;i<bufLen;i++)
         {
-            Assemble_Data[assembleLen]=buf[i];
+            Assemble_Data[assembleLen] = buf[i];
             assembleLen++;
         }
-        Len=strlen(Assemble_Data);
-        assembleCnt=Checking(Assemble_Data, Len, assembleCnt);
+        Len = strlen(Assemble_Data);
+        assembleCnt = Checking(Assemble_Data, Len, assembleCnt);
         HAMSTRONE_WriteValueStore(9, (uint32_t)assembleCnt);
         usleep(200000);
     }
     return 0;
 }
 
-int I2CWriteSingle(int fd, uint16_t addr, uint8_t regaddr, uint8_t value) {
+int I2CWriteSingle(int fd, uint16_t addr, uint8_t regaddr, uint8_t value)
+{
     struct i2c_msg_s msg[1];
     struct i2c_transfer_s trans;
     uint8_t rawbuf[2] = {regaddr, value};

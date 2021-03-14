@@ -16,3 +16,7 @@ HAMSTRONE_CONFIG_VALUE_TYPE HAMSTRONE_ReadValueStore(int index) {
 void HAMSTRONE_WriteValueStore(int index, HAMSTRONE_CONFIG_VALUE_TYPE data) {
     valueStore[index] = data;
 }
+
+HAMSTRONE_CONFIG_VALUE_TYPE* HAMSTRONE_GetValueStorePointer() {
+    return valueStore;
+}
