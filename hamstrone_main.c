@@ -10,7 +10,7 @@
  * hello_main
  ****************************************************************************/
 
-int HAMSTRONE_GLOBAL_TELEMETRY_PORT, HAMSTRONE_GLOBAL_GPS_PORT, HAMSTRONE_GLOBAL_IMU_PORT;
+int HAMSTRONE_GLOBAL_TELEMETRY_PORT, HAMSTRONE_GLOBAL_GPS_PORT, HAMSTRONE_GLOBAL_IMU_PORT, HAMSTRONE_GLOBAL_MOTOR_PWM;
 sem_t HAMSTRONE_GLOBAL_TELEMETRY_SEMAPHORE;
 
 int hamstrone_main(int argc, FAR char *argv[])
@@ -35,7 +35,7 @@ int hamstrone_main(int argc, FAR char *argv[])
   /* nsh initialize for mounting i2c device */
   nsh_initialize();
 
-  /* Initialize i2c port */
+  /* Initialize devices */
   HAMSTRONE_GLOBAL_IMU_PORT = open(HAMSTRONE_CONFIG_I2CPORT1_PATH, O_RDONLY);
   if (HAMSTRONE_GLOBAL_IMU_PORT < 0)
   {
@@ -52,7 +52,17 @@ int hamstrone_main(int argc, FAR char *argv[])
     int currentErrno = errno;
     HAMSTERTONGUE_InitFailf(
         "%s,gps_port,errno=%s=%d",
-        HAMSTRONE_GLOBAL_GPS_PORT, strerror(currentErrno), currentErrno);
+        HAMSTRONE_CONFIG_SERIALPORT2_PATH, strerror(currentErrno), currentErrno);
+    return -1;
+  }
+
+  HAMSTRONE_GLOBAL_MOTOR_PWM = open(HAMSTRONE_CONFIG_TIMER1PWM_PATH, O_RDONLY);
+  if (HAMSTRONE_GLOBAL_MOTOR_PWM < 0)
+  {
+    int currentErrno = errno;
+    HAMSTERTONGUE_InitFailf(
+        "%s,pwm_port,errno=%s=%d",
+        HAMSTRONE_CONFIG_TIMER1PWM_PATH, strerror(currentErrno), currentErrno);
     return -1;
   }
 
@@ -63,7 +73,8 @@ int hamstrone_main(int argc, FAR char *argv[])
   task_create("tskTransmitValue", 100, 2048, &tskTransmitValue, NULL);
   task_create("tskUpdateValue", 100, 2048, &tskUpdateValue, NULL);
   task_create("tskParsingGPS", 100, 14336, &tskParsingGPS, NULL);
-
+  task_create("tskTestPwm", 100, 1024, &tskTestPwm, NULL);
+  
   /* Initialize complete */
   HAMSTERTONGUE_WriteAndFreeMessage(
       HAMSTRONE_GLOBAL_TELEMETRY_PORT,

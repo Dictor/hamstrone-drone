@@ -1,5 +1,34 @@
 #include "include/task.h"
 
+int tskTestPwm(int argc, char *argv[]) 
+{
+    struct pwm_info_s ch;
+    ch.frequency = 50;
+    ch.channels[0].duty = 1;
+    ch.channels[0].channel = 1;
+    ch.channels[1].duty = 1;
+    ch.channels[1].channel = 2;
+    ch.channels[2].duty = 1;
+    ch.channels[2].channel = 3;
+    ch.channels[3].duty = 1;
+    ch.channels[3].channel = 4;
+    int dir = 100;
+    ioctl(HAMSTRONE_GLOBAL_MOTOR_PWM, PWMIOC_SETCHARACTERISTICS, (unsigned long)((uintptr_t)&ch));
+    ioctl(HAMSTRONE_GLOBAL_MOTOR_PWM, PWMIOC_START);
+    while (1) {
+        if (ch.channels[0].duty >= 65000) {
+            dir = -100;
+        } else if (ch.channels[0].duty <= 500) {
+            dir = 100;
+        }
+        ch.channels[0].duty += dir;
+        ch.channels[1].duty += dir;
+        ch.channels[2].duty += dir;
+        ch.channels[3].duty += dir;
+        usleep(5000);
+    }
+}
+
 int tskTransmitValue(int argc, char *argv[])
 {
     int period = atoi(argv[1]);
