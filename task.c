@@ -171,7 +171,7 @@ int pidControl(int argc, char *argv[])
             new[i]=degree[i];
             error[i]=desired[i]-new[i];
             dInput[i]=new[i]-prevInput[i];
-            prevInput[i]=new[i];
+            prevInput[i]=new[i]; 
 
             controlP[i]=kP[i]*error[i];
             controlI[i]+=kI[i]*error[i]*time;
