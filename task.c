@@ -1,4 +1,11 @@
 #include "include/task.h"
+#define MAX_SIZE 3
+
+double degree[MAX_SIZE];
+
+double kP[MAX_SIZE]={0,0,0};
+double kI[MAX_SIZE]={0,0,0};
+double kD[MAX_SIZE]={0,0,0};
 
 int tskTransmitValue(int argc, char *argv[])
 {
@@ -101,6 +108,11 @@ int tskUpdateValue(int argc, char *argv[])
         gyroAngZ += gyroZ * HAMSTRONE_CONFIG_MPU6050_GYRO_TIMEDELTA;
         filterAngX = accelAngX * HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT + (1 - HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT) * gyroAngX;
         filterAngY = accelAngY * HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT + (1 - HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT) * gyroAngY;
+        
+        degree[0]+=filterAngX;
+        degree[1]+=filterAngY;
+        degree[2]+=gyroAngZ;
+
         HAMSTRONE_WriteValueStore(2, (uint32_t)(filterAngX * 100 + 18000));
         HAMSTRONE_WriteValueStore(3, (uint32_t)(filterAngY * 100 + 18000));
         HAMSTRONE_WriteValueStore(4, (uint32_t)(gyroAngZ * 100 + 18000));
@@ -109,6 +121,33 @@ int tskUpdateValue(int argc, char *argv[])
         clock_gettime(CLOCK_MONOTONIC, &taskendTs);
         // PROPERY TICK RESOULUTION IS SMALLER THAN 1000USEC
         HAMSTRONE_WriteValueStore(1, (uint32_t)((taskendTs.tv_nsec - currentTs.tv_nsec) / 1000000));
+    }
+}
+
+int pidControl(int argc, char *argv[])
+{
+    double new[MAX_SIZE], double desired[MAX_SIZE];
+    double dInput[MAX_SIZE], error[MAX_SIZE], prevInput[MAX_SIZE];
+    double controlP[MAX_SIZE], controlI[MAX_SIZE]], controlD[MAX_SIZE];
+    double pidControl[MAX_SIZE];
+    double time=0;
+    int i;
+    while(1)
+    {
+        tskUpdateValue();
+        for(i=0;i<3;i++)
+        {
+            new[i]=degree[i];
+            error[i]=desired[i]-new[i];
+            dInput[i]=new[i]-prevInput[i];
+            prevInput[i]=new[i]; 
+
+            controlP[i]=kP[i]*error[i];
+            controlI[i]+=kI[i]*error[i]*time;
+            controlD[i]=-kD[i]*dInput[i]/time;
+
+            pidControl[i]=controlP[i]+controlI[i]+controlD[i];
+        }
     }
 }
 
