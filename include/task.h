@@ -20,9 +20,7 @@
 
 /* Nuttx header */
 #include "nuttx/i2c/i2c_master.h"
-#include "nuttx/timers/pwm.h"
 
-int tskTestPwm(int argc, char *argv[]);
 int tskTransmitValue(int argc, char * argv []);
 int tskUpdateValue(int argc, char *argv[]);
 int tskParsingGPS(int argc, char *argv[]);
