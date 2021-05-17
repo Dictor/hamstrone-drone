@@ -182,6 +182,11 @@ int pidControl(int argc, char *argv[])
     }
 }
 
+int motorSpeed(int argc, char *argc[])
+{
+    aSpeed
+}
+
 int tskParsingGPS(int argc, char *argv[])
 {
 	#define MSG_BUF_SIZE 33
