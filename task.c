@@ -165,7 +165,6 @@ int pidControl(int argc, char *argv[])
     double time = 4;
     while(1)
     {
-        tskUpdateValue(int argc, char *argv[]);
         for(i=0;i<3;i++)
         {
             new[i]=degree[i];
