@@ -1,11 +1,44 @@
 #include "include/task.h"
 #define MAX_SIZE 3
 
-double degree[MAX_SIZE];
+double degree[MAX_SIZE], prevInput[MAX_SIZE] = { 0.0,0.0,0.0 };
 
-double kP[MAX_SIZE]={0,0,0};
-double kI[MAX_SIZE]={0,0,0};
-double kD[MAX_SIZE]={0,0,0};
+double controlP[MAX_SIZE], controlI[MAX_SIZE], controlD[MAX_SIZE];
+
+double kP[MAX_SIZE] = { 0.408,1.02,0.0408 };
+double kI[MAX_SIZE] = { 0.408,1.02,0.0408 };
+double kD[MAX_SIZE] = { 0.408,1.02,0.0408 };
+
+int tskTestPwm(int argc, char *argv[]) 
+{
+    struct pwm_info_s ch;
+    ch.frequency = 50;
+    ch.channels[0].duty = 1;
+    ch.channels[0].channel = 1;
+    ch.channels[1].duty = 1;
+    ch.channels[1].channel = 2;
+    ch.channels[2].duty = 1;
+    ch.channels[2].channel = 3;
+    ch.channels[3].duty = 1;
+    ch.channels[3].channel = 4;
+    int dir = 100;
+    ioctl(HAMSTRONE_GLOBAL_MOTOR_PWM, PWMIOC_SETCHARACTERISTICS, (unsigned long)((uintptr_t)&ch));
+    ioctl(HAMSTRONE_GLOBAL_MOTOR_PWM, PWMIOC_START);
+    while (1) {
+        if (ch.channels[0].duty >= 65000) {
+            dir = -100;
+        } else if (ch.channels[0].duty <= 500) {
+            dir = 100;
+        }
+        ch.channels[0].duty += dir;
+        ch.channels[1].duty += dir;
+        ch.channels[2].duty += dir;
+        ch.channels[3].duty += dir;
+        usleep(5000);
+    }
+
+
+}
 
 int tskTransmitValue(int argc, char *argv[])
 {
@@ -49,7 +82,7 @@ int tskUpdateValue(int argc, char *argv[])
     double filterAngX, filterAngY;
 
     int errcnt;
-    PWMWriteAll(HAMSTRONE_GLOBAL_MOTOR_PWM_INFO, 50, 50, 50, 50);
+
     /* initialize mpu6050 */
     if (I2CWriteSingle(HAMSTRONE_GLOBAL_IMU_PORT, HAMSTRONE_CONFIG_I2C_ADDRESS_MPU6050, HAMSTRONE_CONFIG_MPU6050_PWR_MGMT_1, 0b00000000) < 0)
     {
@@ -126,21 +159,19 @@ int tskUpdateValue(int argc, char *argv[])
 
 int pidControl(int argc, char *argv[])
 {
-    double new[MAX_SIZE], double desired[MAX_SIZE];
-    double dInput[MAX_SIZE], error[MAX_SIZE], prevInput[MAX_SIZE];
-    double controlP[MAX_SIZE], controlI[MAX_SIZE]], controlD[MAX_SIZE];
+    double new[MAX_SIZE], desired[MAX_SIZE] = { 10.0,10.0,10.0 };
+    double dInput[MAX_SIZE], error[MAX_SIZE];
     double pidControl[MAX_SIZE];
-    double time=0;
-    int i;
+    double time = 4;
     while(1)
     {
-        tskUpdateValue();
+        tskUpdateValue(int argc, char *argv[]);
         for(i=0;i<3;i++)
         {
             new[i]=degree[i];
             error[i]=desired[i]-new[i];
             dInput[i]=new[i]-prevInput[i];
-            prevInput[i]=new[i]; 
+            prevInput[i]=new[i];
 
             controlP[i]=kP[i]*error[i];
             controlI[i]+=kI[i]*error[i]*time;
@@ -148,12 +179,9 @@ int pidControl(int argc, char *argv[])
 
             pidControl[i]=controlP[i]+controlI[i]+controlD[i];
         }
+        usleep(200000);
     }
-}
-
-int motorSpeed(int argc, char *argc[])
-{
-    aSpeed
+    return 0;
 }
 
 int tskParsingGPS(int argc, char *argv[])
