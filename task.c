@@ -14,7 +14,7 @@ void pidControl(double AngX, double AngY, double * pidAssemble)
     static double prevInput[MAX_SIZE] = { 0.0, };
     static double controlI[MAX_SIZE] = { 0.0, };
     double controlP[MAX_SIZE], controlD[MAX_SIZE], dInput[MAX_SIZE], error[MAX_SIZE], desired[MAX_SIZE] = { 10.0, };
-    double time = 4;
+    double time = 0.01;
     int i;
   
     for (i = 0; i < 2; i++)
@@ -24,7 +24,7 @@ void pidControl(double AngX, double AngY, double * pidAssemble)
         prevInput[i] = degree[i];
 
         controlP[i] = kP[i] * error[i];
-        controlI[i] += kI[i] * error[i] * time;
+        controlI[i] = kI[i] * error[i] * time;
         controlD[i] = -kD[i] * dInput[i] / time;
 
         pidAssemble[i] = controlP[i] + controlI[i] + controlD[i];
@@ -133,13 +133,22 @@ int tskUpdateValue(int argc, char *argv[])
         gyroAngZ += gyroZ * HAMSTRONE_CONFIG_MPU6050_GYRO_TIMEDELTA;
         filterAngX = accelAngX * HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT + (1 - HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT) * gyroAngX;
         filterAngY = accelAngY * HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT + (1 - HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT) * gyroAngY;
-        
-        pidcontrol(filterAngX,filterAngY,pidAssemble);
+        if (filterAngX>=10000)
+            filterAngX==0;
+        if (filterAngY>=10000)
+            filterAngY==0;
+
+        pidControl(filterAngX,filterAngY,pidAssemble);
 
         HAMSTRONE_WriteValueStore(2, (uint32_t)(filterAngX * 100 + 18000));
         HAMSTRONE_WriteValueStore(3, (uint32_t)(filterAngY * 100 + 18000));
         HAMSTRONE_WriteValueStore(4, (uint32_t)(gyroAngZ * 100 + 18000));
 
+        HAMSTRONE_WriteValueStore(6, (uint32_t)(10*(pidAssemble[0]+pidAssemble[1])+200));
+        HAMSTRONE_WriteValueStore(7, (uint32_t)(10*(pidAssemble[0]-pidAssemble[1])+200));
+        HAMSTRONE_WriteValueStore(8, (uint32_t)(10*(-pidAssemble[0]+pidAssemble[1])+200));
+        HAMSTRONE_WriteValueStore(9, (uint32_t)(10*(-pidAssemble[0]-pidAssemble[1])+200));
+        
         usleep(period);
         clock_gettime(CLOCK_MONOTONIC, &taskendTs);
         // PROPERY TICK RESOULUTION IS SMALLER THAN 1000USEC
