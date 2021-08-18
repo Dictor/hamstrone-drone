@@ -1,9 +1,9 @@
 #include "include/task.h"
 #define MAX_SIZE 2
 
-double kP[MAX_SIZE] = { 0.408,0.408 };
-double kI[MAX_SIZE] = { 1.02,1.02 };
-double kD[MAX_SIZE] = { 0.0408,0.0408 };
+double kP[MAX_SIZE] = {0.408, 0.408};
+double kI[MAX_SIZE] = {1.02, 1.02};
+double kD[MAX_SIZE] = {0.0408, 0.0408};
 
 void pidControl(double AngX, double AngY, double * pidAssemble)
 {
@@ -30,6 +30,7 @@ void pidControl(double AngX, double AngY, double * pidAssemble)
         pidAssemble[i] = controlP[i] + controlI[i] + controlD[i];
     }
 }
+
 
 int tskTransmitValue(int argc, char *argv[])
 {
@@ -83,7 +84,7 @@ int tskUpdateValue(int argc, char *argv[])
     double gyroAngX, gyroAngY, gyroAngZ;
     double filterAngX, filterAngY;
     double pidAssemble[MAX_SIZE];
-    
+
     int errcnt;
 
     /* initialize mpu6050 */
@@ -111,7 +112,6 @@ int tskUpdateValue(int argc, char *argv[])
                 "fd=%d so6203 enable",
                 HAMSTRONE_GLOBAL_IMU_PORT));
     }
-    
 
     while (1)
     {
@@ -159,23 +159,24 @@ int tskUpdateValue(int argc, char *argv[])
         gyroAngZ += gyroZ * HAMSTRONE_CONFIG_MPU6050_GYRO_TIMEDELTA;
         filterAngX = accelAngX * HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT + (1 - HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT) * gyroAngX;
         filterAngY = accelAngY * HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT + (1 - HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT) * gyroAngY;
-        if (filterAngX>=10000)
-            filterAngX==0;
-        if (filterAngY>=10000)
-            filterAngY==0;
+        if (filterAngX >= 10000)
+            filterAngX = 0;
+        if (filterAngY >= 10000)
+            filterAngY = 0;
 
-        pidControl(filterAngX,filterAngY,pidAssemble);
+        pidControl(filterAngX, filterAngY, pidAssemble);
 
         HAMSTRONE_WriteValueStore(2, (uint32_t)(filterAngX * 100 + 18000));
         HAMSTRONE_WriteValueStore(3, (uint32_t)(filterAngY * 100 + 18000));
         HAMSTRONE_WriteValueStore(4, (uint32_t)(gyroAngZ * 100 + 18000));
-        HAMSTRONE_WriteValueStore(5, (uint32_t)(value[7]));
 
-        HAMSTRONE_WriteValueStore(6, (uint32_t)(10*(pidAssemble[0]+pidAssemble[1])+200));
-        HAMSTRONE_WriteValueStore(7, (uint32_t)(10*(pidAssemble[0]-pidAssemble[1])+200));
-        HAMSTRONE_WriteValueStore(8, (uint32_t)(10*(-pidAssemble[0]+pidAssemble[1])+200));
-        HAMSTRONE_WriteValueStore(9, (uint32_t)(10*(-pidAssemble[0]-pidAssemble[1])+200));
-        
+        HAMSTRONE_WriteValueStore(6, (uint32_t)(10 * (pidAssemble[0] + pidAssemble[1]) + 200));
+        HAMSTRONE_WriteValueStore(7, (uint32_t)(10 * (pidAssemble[0] - pidAssemble[1]) + 200));
+        HAMSTRONE_WriteValueStore(8, (uint32_t)(10 * (-pidAssemble[0] + pidAssemble[1]) + 200));
+        HAMSTRONE_WriteValueStore(9, (uint32_t)(10 * (-pidAssemble[0] - pidAssemble[1]) + 200));
+
+        HAMSTRONE_WriteValueStore(10, (uint32_t)(value[7]));
+
         usleep(period);
         clock_gettime(CLOCK_MONOTONIC, &taskendTs);
         // PROPERY TICK RESOULUTION IS SMALLER THAN 1000USEC
@@ -183,45 +184,21 @@ int tskUpdateValue(int argc, char *argv[])
     }
 }
 
-int pidControl(int argc, char *argv[])
-{
-    double new[MAX_SIZE], desired[MAX_SIZE] = { 10.0,10.0,10.0 };
-    double dInput[MAX_SIZE], error[MAX_SIZE];
-    double pidControl[MAX_SIZE];
-    double time = 4;
-    while(1)
-    {
-        for(int i=0;i<3;i++)
-        {
-            new[i]=degree[i];
-            error[i]=desired[i]-new[i];
-            dInput[i]=new[i]-prevInput[i];
-            prevInput[i]=new[i];
-
-            controlP[i]=kP[i]*error[i];
-            controlI[i]+=kI[i]*error[i]*time;
-            controlD[i]=-kD[i]*dInput[i]/time;
-
-            pidControl[i]=controlP[i]+controlI[i]+controlD[i];
-        }
-        usleep(200000);
-    }
-    return 0;
-}
-
 int tskParsingGPS(int argc, char *argv[])
 {
-	#define MSG_BUF_SIZE 33
-    int assembleCnt=0, i=0, bufLen=0, assembleLen=0, Len=0;
-    char Assemble_Data[200]={0,};
+#define MSG_BUF_SIZE 33
+    int assembleCnt = 0, i = 0, bufLen = 0, assembleLen = 0, Len = 0;
+    char Assemble_Data[200] = {
+        0,
+    };
     char buf[MSG_BUF_SIZE];
-    while(1)
-	{
-        memset(buf,0x00,33);
+    while (1)
+    {
+        memset(buf, 0x00, 33);
         read(HAMSTRONE_GLOBAL_GPS_PORT, buf, 32);
-        bufLen=strlen(buf);
-        assembleLen=strlen(Assemble_Data);
-        for(i=0;i<bufLen;i++)
+        bufLen = strlen(buf);
+        assembleLen = strlen(Assemble_Data);
+        for (i = 0; i < bufLen; i++)
         {
             Assemble_Data[assembleLen] = buf[i];
             assembleLen++;
