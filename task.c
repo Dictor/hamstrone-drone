@@ -32,7 +32,17 @@ int tskUpdateValue(int argc, char *argv[])
     struct timespec startTs, currentTs, taskendTs;
     clock_gettime(CLOCK_MONOTONIC, &startTs);
 
-#define VALUE_CNT 7
+#define VALUE_CNT 8
+    uint8_t devAddr[VALUE_CNT] = {
+        HAMSTRONE_CONFIG_I2C_ADDRESS_MPU6050,
+        HAMSTRONE_CONFIG_I2C_ADDRESS_MPU6050,
+        HAMSTRONE_CONFIG_I2C_ADDRESS_MPU6050,
+        HAMSTRONE_CONFIG_I2C_ADDRESS_MPU6050,
+        HAMSTRONE_CONFIG_I2C_ADDRESS_MPU6050,
+        HAMSTRONE_CONFIG_I2C_ADDRESS_MPU6050,
+        HAMSTRONE_CONFIG_I2C_ADDRESS_MPU6050,
+        HAMSTRONE_CONFIG_I2C_ADDRESS_SO6203,
+    };
     uint8_t regAddr[VALUE_CNT] = {
         HAMSTRONE_CONFIG_MPU6050_ACCEL_XOUT_H,
         HAMSTRONE_CONFIG_MPU6050_ACCEL_YOUT_H,
@@ -41,6 +51,7 @@ int tskUpdateValue(int argc, char *argv[])
         HAMSTRONE_CONFIG_MPU6050_GYRO_YOUT_H,
         HAMSTRONE_CONFIG_MPU6050_GYRO_ZOUT_H,
         HAMSTRONE_CONFIG_MPU6050_TEMP_OUT_H,
+        HAMSTRONE_CONFIG_SO6203_ADCW_H,
     };
     uint8_t valuel, valueh;
     uint16_t value[VALUE_CNT];
@@ -63,6 +74,21 @@ int tskUpdateValue(int argc, char *argv[])
                 "fd=%d mpu6050 pwr_mgmt_1",
                 HAMSTRONE_GLOBAL_IMU_PORT));
     }
+
+    /* initialize SO6203 */
+    if (I2CWriteSingle(HAMSTRONE_GLOBAL_IMU_PORT, HAMSTRONE_CONFIG_I2C_ADDRESS_SO6203, HAMSTRONE_CONFIG_SO6203_EN, 0b00001011) < 0)
+    {
+        HAMSTERTONGUE_WriteAndFreeMessage(
+            HAMSTRONE_GLOBAL_TELEMETRY_PORT,
+            HAMSTERTONGUE_NewFormatStringMessage(
+                HAMSTERTONGUE_MESSAGE_VERB_SIGNAL,
+                HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_I2CREADFAIL,
+                24,
+                "fd=%d so6203 enable",
+                HAMSTRONE_GLOBAL_IMU_PORT));
+    }
+    
+
     while (1)
     {
         /* update runtime */
@@ -73,9 +99,9 @@ int tskUpdateValue(int argc, char *argv[])
         for (int i = 0; i < VALUE_CNT; i++)
         {
             errcnt = 0;
-            if (I2CReadWriteSingle(HAMSTRONE_GLOBAL_IMU_PORT, HAMSTRONE_CONFIG_I2C_ADDRESS_MPU6050, regAddr[i], &valueh) < 0)
+            if (I2CReadWriteSingle(HAMSTRONE_GLOBAL_IMU_PORT, devAddr[i], regAddr[i], &valueh) < 0)
                 errcnt++;
-            if (I2CReadWriteSingle(HAMSTRONE_GLOBAL_IMU_PORT, HAMSTRONE_CONFIG_I2C_ADDRESS_MPU6050, regAddr[i] + 1, &valuel) < 0)
+            if (I2CReadWriteSingle(HAMSTRONE_GLOBAL_IMU_PORT, devAddr[i], regAddr[i] + 1, &valuel) < 0)
                 errcnt++;
             if (errcnt > 0)
             {
@@ -85,8 +111,8 @@ int tskUpdateValue(int argc, char *argv[])
                         HAMSTERTONGUE_MESSAGE_VERB_SIGNAL,
                         HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_I2CREADFAIL,
                         24,
-                        "fd=%d errcnt=%d",
-                        HAMSTRONE_GLOBAL_IMU_PORT, errcnt));
+                        "fd=%d dev=%d errcnt=%d",
+                        HAMSTRONE_GLOBAL_IMU_PORT, devAddr[i], errcnt));
                 continue;
             }
             value[i] = (valueh << 8) | valuel;
@@ -117,6 +143,7 @@ int tskUpdateValue(int argc, char *argv[])
         HAMSTRONE_WriteValueStore(2, (uint32_t)(filterAngX * 100 + 18000));
         HAMSTRONE_WriteValueStore(3, (uint32_t)(filterAngY * 100 + 18000));
         HAMSTRONE_WriteValueStore(4, (uint32_t)(gyroAngZ * 100 + 18000));
+        HAMSTRONE_WriteValueStore(5, (uint32_t)(value[7]));
 
         usleep(period);
         clock_gettime(CLOCK_MONOTONIC, &taskendTs);
@@ -133,7 +160,7 @@ int pidControl(int argc, char *argv[])
     double time = 4;
     while(1)
     {
-        for(i=0;i<3;i++)
+        for(int i=0;i<3;i++)
         {
             new[i]=degree[i];
             error[i]=desired[i]-new[i];
