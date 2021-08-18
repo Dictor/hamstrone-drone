@@ -1,12 +1,35 @@
 #include "include/task.h"
-#define MAX_SIZE 3
+#define MAX_SIZE 2
 
-double degree[MAX_SIZE], prevInput[MAX_SIZE] = { 0.0,0.0,0.0 };
-double controlP[MAX_SIZE], controlI[MAX_SIZE], controlD[MAX_SIZE];
+double kP[MAX_SIZE] = { 0.408,0.408 };
+double kI[MAX_SIZE] = { 1.02,1.02 };
+double kD[MAX_SIZE] = { 0.0408,0.0408 };
 
-double kP[MAX_SIZE] = { 0.408,1.02,0.0408 };
-double kI[MAX_SIZE] = { 0.408,1.02,0.0408 };
-double kD[MAX_SIZE] = { 0.408,1.02,0.0408 };
+void pidControl(double AngX, double AngY, double * pidAssemble)
+{
+    double degree[MAX_SIZE] = { 0.0, };
+    degree[0] = AngX;
+    degree[1] = AngY;
+ 
+    static double prevInput[MAX_SIZE] = { 0.0, };
+    static double controlI[MAX_SIZE] = { 0.0, };
+    double controlP[MAX_SIZE], controlD[MAX_SIZE], dInput[MAX_SIZE], error[MAX_SIZE], desired[MAX_SIZE] = { 10.0, };
+    double time = 0.01;
+    int i;
+  
+    for (i = 0; i < 2; i++)
+    {
+        error[i] = desired[i] - degree[i];
+        dInput[i] = degree[i] - prevInput[i];
+        prevInput[i] = degree[i];
+
+        controlP[i] = kP[i] * error[i];
+        controlI[i] = kI[i] * error[i] * time;
+        controlD[i] = -kD[i] * dInput[i] / time;
+
+        pidAssemble[i] = controlP[i] + controlI[i] + controlD[i];
+    }
+}
 
 int tskTransmitValue(int argc, char *argv[])
 {
@@ -59,7 +82,8 @@ int tskUpdateValue(int argc, char *argv[])
     double accelXsq, accelYsq, accelZsq, accelAngX, accelAngY;
     double gyroAngX, gyroAngY, gyroAngZ;
     double filterAngX, filterAngY;
-
+    double pidAssemble[MAX_SIZE];
+    
     int errcnt;
 
     /* initialize mpu6050 */
@@ -135,16 +159,23 @@ int tskUpdateValue(int argc, char *argv[])
         gyroAngZ += gyroZ * HAMSTRONE_CONFIG_MPU6050_GYRO_TIMEDELTA;
         filterAngX = accelAngX * HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT + (1 - HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT) * gyroAngX;
         filterAngY = accelAngY * HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT + (1 - HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT) * gyroAngY;
-        
-        degree[0]+=filterAngX;
-        degree[1]+=filterAngY;
-        degree[2]+=gyroAngZ;
+        if (filterAngX>=10000)
+            filterAngX==0;
+        if (filterAngY>=10000)
+            filterAngY==0;
+
+        pidControl(filterAngX,filterAngY,pidAssemble);
 
         HAMSTRONE_WriteValueStore(2, (uint32_t)(filterAngX * 100 + 18000));
         HAMSTRONE_WriteValueStore(3, (uint32_t)(filterAngY * 100 + 18000));
         HAMSTRONE_WriteValueStore(4, (uint32_t)(gyroAngZ * 100 + 18000));
         HAMSTRONE_WriteValueStore(5, (uint32_t)(value[7]));
 
+        HAMSTRONE_WriteValueStore(6, (uint32_t)(10*(pidAssemble[0]+pidAssemble[1])+200));
+        HAMSTRONE_WriteValueStore(7, (uint32_t)(10*(pidAssemble[0]-pidAssemble[1])+200));
+        HAMSTRONE_WriteValueStore(8, (uint32_t)(10*(-pidAssemble[0]+pidAssemble[1])+200));
+        HAMSTRONE_WriteValueStore(9, (uint32_t)(10*(-pidAssemble[0]-pidAssemble[1])+200));
+        
         usleep(period);
         clock_gettime(CLOCK_MONOTONIC, &taskendTs);
         // PROPERY TICK RESOULUTION IS SMALLER THAN 1000USEC
