@@ -31,9 +31,10 @@
             48, __VA_ARGS__));
 
 extern int HAMSTRONE_GLOBAL_TELEMETRY_PORT;
-extern int HAMSTRONE_GLOBAL_GPS_PORT;
-extern int HAMSTRONE_GLOBAL_IMU_PORT;
+extern int HAMSTRONE_GLOBAL_SERIAL_PORT;
+extern int HAMSTRONE_GLOBAL_I2C_PORT;
 extern int HAMSTRONE_GLOBAL_MOTOR_PWM;
+extern int HAMSTRONE_GLOBAL_SPI_PORT;
 extern struct pwm_info_s *HAMSTRONE_GLOBAL_MOTOR_PWM_INFO;
 extern sem_t HAMSTRONE_GLOBAL_TELEMETRY_SEMAPHORE;
 int hamstrone_main(int argc, char *argv[]);

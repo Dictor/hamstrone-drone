@@ -80,9 +80,8 @@ int tskUpdateValue(int argc, char *argv[])
 
     int errcnt;
 
-/* initialize mpu6050 */
-/*
-    if (I2CWriteSingle(HAMSTRONE_GLOBAL_IMU_PORT, HAMSTRONE_CONFIG_I2C_ADDRESS_MPU6050, HAMSTRONE_CONFIG_MPU6050_PWR_MGMT_1, 0b00000000) < 0)
+    /* initialize mpu6050 */
+    if (SPIWriteSingle(HAMSTRONE_GLOBAL_SPI_PORT, SPIDEV_MODE2, HAMSTRONE_CONFIG_MPU6050_PWR_MGMT_1, 0b00000000) < 0)
     {
         HAMSTERTONGUE_WriteAndFreeMessage(
             HAMSTRONE_GLOBAL_TELEMETRY_PORT,
@@ -91,17 +90,16 @@ int tskUpdateValue(int argc, char *argv[])
                 HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_I2CREADFAIL,
                 24,
                 "fd=%d mpu6050 pwr_mgmt_1",
-                HAMSTRONE_GLOBAL_IMU_PORT));
+                HAMSTRONE_GLOBAL_I2C_PORT));
     }
-    */
 
 /* initialize SO6203 */
 #define SO6203_CHAN_START 0
 #define SO6203_CHAN_END 0
     for (int c = SO6203_CHAN_START; c <= SO6203_CHAN_END; c++)
     {
-        TCA9548SetChannel(HAMSTRONE_GLOBAL_IMU_PORT, c);
-        if (I2CWriteSingle(HAMSTRONE_GLOBAL_IMU_PORT, HAMSTRONE_CONFIG_I2C_ADDRESS_SO6203, HAMSTRONE_CONFIG_SO6203_EN, 0b00001011) < 0)
+        TCA9548SetChannel(HAMSTRONE_GLOBAL_I2C_PORT, c);
+        if (I2CWriteSingle(HAMSTRONE_GLOBAL_I2C_PORT, HAMSTRONE_CONFIG_I2C_ADDRESS_SO6203, HAMSTRONE_CONFIG_SO6203_EN, 0b00001011) < 0)
         {
             HAMSTERTONGUE_WriteAndFreeMessage(
                 HAMSTRONE_GLOBAL_TELEMETRY_PORT,
@@ -110,7 +108,7 @@ int tskUpdateValue(int argc, char *argv[])
                     HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_I2CREADFAIL,
                     24,
                     "fd=%d chan=%d so6203 en",
-                    HAMSTRONE_GLOBAL_IMU_PORT, c));
+                    HAMSTRONE_GLOBAL_I2C_PORT, c));
         }
     }
 
@@ -125,13 +123,13 @@ int tskUpdateValue(int argc, char *argv[])
         {
             for (int i = 0; i < VALUE_CNT; i++)
             {
-                
+
                 errcnt = 0;
-                if (TCA9548SetChannel(HAMSTRONE_GLOBAL_IMU_PORT, c) < 0)
+                if (TCA9548SetChannel(HAMSTRONE_GLOBAL_I2C_PORT, c) < 0)
                     errcnt++;
-                if (I2CReadWriteSingle(HAMSTRONE_GLOBAL_IMU_PORT, devAddr[i], regAddr[i], &valueh) < 0)
+                if (I2CReadSingle(HAMSTRONE_GLOBAL_I2C_PORT, devAddr[i], regAddr[i], &valueh) < 0)
                     errcnt++;
-                if (I2CReadWriteSingle(HAMSTRONE_GLOBAL_IMU_PORT, devAddr[i], regAddr[i] + 1, &valuel) < 0)
+                if (I2CReadSingle(HAMSTRONE_GLOBAL_I2C_PORT, devAddr[i], regAddr[i] + 1, &valuel) < 0)
                     errcnt++;
                 if (errcnt > 0)
                 {
@@ -142,7 +140,7 @@ int tskUpdateValue(int argc, char *argv[])
                             HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_I2CREADFAIL,
                             24,
                             "fd=%d dev=%d errcnt=%d",
-                            HAMSTRONE_GLOBAL_IMU_PORT, devAddr[i], errcnt));
+                            HAMSTRONE_GLOBAL_I2C_PORT, devAddr[i], errcnt));
                     continue;
                 }
                 value[c + i] = (valueh << 8) | valuel;
@@ -182,7 +180,7 @@ int tskUpdateValue(int argc, char *argv[])
         HAMSTRONE_WriteValueStore(8, (uint32_t)(10 * (-pidAssemble[0] + pidAssemble[1]) + 200));
         HAMSTRONE_WriteValueStore(9, (uint32_t)(10 * (-pidAssemble[0] - pidAssemble[1]) + 200));
         */
-        
+
         HAMSTRONE_WriteValueStore(10, (uint32_t)(value[0]));
 
         usleep(period);
@@ -203,7 +201,7 @@ int tskParsingGPS(int argc, char *argv[])
     while (1)
     {
         memset(buf, 0x00, 33);
-        read(HAMSTRONE_GLOBAL_GPS_PORT, buf, 32);
+        read(HAMSTRONE_GLOBAL_SERIAL_PORT, buf, 32);
         bufLen = strlen(buf);
         assembleLen = strlen(Assemble_Data);
         for (i = 0; i < bufLen; i++)
@@ -224,6 +222,45 @@ int TCA9548SetChannel(int fd, uint8_t chan)
     return I2CWriteSingle(fd, HAMSTRONE_CONFIG_I2C_ADDRESS_TCA9548, HAMSTRONE_CONFIG_TCA9548_CHAN, 1 << chan);
 }
 
+int SPIWriteSingle(int fd, enum spi_mode_e mode, uint8_t regaddr, uint8_t value)
+{
+    struct spi_sequence_s seq;
+    struct spi_trans_s trans[1];
+    uint8_t tx[2] = {regaddr, value};
+
+    trans[0].nwords = 2;
+    trans[0].txbuffer = tx;
+
+    seq.dev = SPIDEVTYPE_USER;
+    seq.mode = mode;
+    seq.nbits = 8;
+    seq.ntrans = 1;
+    seq.trans = trans;
+
+    return ioctl(fd, SPIIOC_TRANSFER, &seq);
+}
+
+int SPIReadSingle(int fd, enum spi_mode_e mode, uint8_t regaddr, uint8_t *buf)
+{
+    struct spi_sequence_s seq;
+    struct spi_trans_s trans[2];
+    uint8_t tx[1] = {regaddr};
+
+    trans[0].nwords = 1;
+    trans[0].txbuffer = tx;
+
+    trans[1].nwords = 1;
+    trans[1].rxbuffer = buf;
+
+    seq.dev = SPIDEVTYPE_USER;
+    seq.mode = mode;
+    seq.nbits = 8;
+    seq.ntrans = 2;
+    seq.trans = trans;
+
+    return ioctl(fd, SPIIOC_TRANSFER, &seq);
+}
+
 int I2CWriteSingle(int fd, uint16_t addr, uint8_t regaddr, uint8_t value)
 {
     struct i2c_msg_s msg[1];
@@ -242,7 +279,7 @@ int I2CWriteSingle(int fd, uint16_t addr, uint8_t regaddr, uint8_t value)
     return ioctl(fd, I2CIOC_TRANSFER, &trans);
 }
 
-int I2CReadWriteSingle(int fd, uint16_t addr, uint8_t regaddr, uint8_t *buf)
+int I2CReadSingle(int fd, uint16_t addr, uint8_t regaddr, uint8_t *buf)
 {
     struct i2c_msg_s msg[2];
     struct i2c_transfer_s trans;

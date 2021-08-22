@@ -10,7 +10,7 @@
  * hello_main
  ****************************************************************************/
 
-int HAMSTRONE_GLOBAL_TELEMETRY_PORT, HAMSTRONE_GLOBAL_GPS_PORT, HAMSTRONE_GLOBAL_IMU_PORT, HAMSTRONE_GLOBAL_MOTOR_PWM;
+int HAMSTRONE_GLOBAL_TELEMETRY_PORT, HAMSTRONE_GLOBAL_SERIAL_PORT, HAMSTRONE_GLOBAL_I2C_PORT, HAMSTRONE_GLOBAL_MOTOR_PWM, HAMSTRONE_GLOBAL_SPI_PORT;
 struct pwm_info_s *HAMSTRONE_GLOBAL_MOTOR_PWM_INFO;
 sem_t HAMSTRONE_GLOBAL_TELEMETRY_SEMAPHORE;
 
@@ -37,8 +37,8 @@ int hamstrone_main(int argc, FAR char *argv[])
   nsh_initialize();
 
   /* Initialize devices */
-  HAMSTRONE_GLOBAL_IMU_PORT = open(HAMSTRONE_CONFIG_I2CPORT1_PATH, O_RDONLY);
-  if (HAMSTRONE_GLOBAL_IMU_PORT < 0)
+  HAMSTRONE_GLOBAL_I2C_PORT = open(HAMSTRONE_CONFIG_I2CPORT1_PATH, O_RDONLY);
+  if (HAMSTRONE_GLOBAL_I2C_PORT < 0)
   {
     int currentErrno = errno;
     HAMSTERTONGUE_InitFailf(
@@ -47,15 +47,25 @@ int hamstrone_main(int argc, FAR char *argv[])
     return -1;
   }
 
-  HAMSTRONE_GLOBAL_GPS_PORT = open(HAMSTRONE_CONFIG_SERIALPORT2_PATH, O_RDWR);
-  if (HAMSTRONE_GLOBAL_GPS_PORT < 0)
+  HAMSTRONE_GLOBAL_SERIAL_PORT = open(HAMSTRONE_CONFIG_SERIALPORT2_PATH, O_RDWR);
+  if (HAMSTRONE_GLOBAL_SERIAL_PORT < 0)
   {
     int currentErrno = errno;
     HAMSTERTONGUE_InitFailf(
-        "%s,gps_port,errno=%s=%d",
+        "%s,serial_port,errno=%s=%d",
         HAMSTRONE_CONFIG_SERIALPORT2_PATH, strerror(currentErrno), currentErrno);
     return -1;
   }
+
+  HAMSTRONE_GLOBAL_SPI_PORT = open(HAMSTRONE_CONFIG_SPIPORT1_PATH, O_RDWR);
+  if (HAMSTRONE_GLOBAL_SPI_PORT < 0)
+  {
+    int currentErrno = errno;
+    HAMSTERTONGUE_InitFailf(
+        "%s,spi_port,errno=%s=%d",
+        HAMSTRONE_CONFIG_SERIALPORT2_PATH, strerror(currentErrno), currentErrno);
+    return -1;
+  } 
 
   HAMSTRONE_GLOBAL_MOTOR_PWM = open(HAMSTRONE_CONFIG_TIMER1PWM_PATH, O_RDONLY);
   if (HAMSTRONE_GLOBAL_MOTOR_PWM < 0)
