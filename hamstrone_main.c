@@ -63,7 +63,7 @@ int hamstrone_main(int argc, FAR char *argv[])
     int currentErrno = errno;
     HAMSTERTONGUE_InitFailf(
         "%s,spi_port,errno=%s=%d",
-        HAMSTRONE_CONFIG_SERIALPORT2_PATH, strerror(currentErrno), currentErrno);
+        HAMSTRONE_CONFIG_SPIPORT1_PATH, strerror(currentErrno), currentErrno);
     return -1;
   } 
 

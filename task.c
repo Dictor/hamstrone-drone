@@ -81,8 +81,10 @@ int tskUpdateValue(int argc, char *argv[])
     int errcnt;
 
     /* initialize mpu6050 */
+    HAMSTERTONGUE_Debugf("start\n");
     if (SPIWriteSingle(HAMSTRONE_GLOBAL_SPI_PORT, SPIDEV_MODE2, HAMSTRONE_CONFIG_MPU6050_PWR_MGMT_1, 0b00000000) < 0)
     {
+            HAMSTERTONGUE_Debugf("err\n");
         HAMSTERTONGUE_WriteAndFreeMessage(
             HAMSTRONE_GLOBAL_TELEMETRY_PORT,
             HAMSTERTONGUE_NewFormatStringMessage(
@@ -92,7 +94,7 @@ int tskUpdateValue(int argc, char *argv[])
                 "fd=%d mpu6050 pwr_mgmt_1",
                 HAMSTRONE_GLOBAL_I2C_PORT));
     }
-
+        HAMSTERTONGUE_Debugf("end\n");
 /* initialize SO6203 */
 #define SO6203_CHAN_START 0
 #define SO6203_CHAN_END 0
@@ -123,7 +125,6 @@ int tskUpdateValue(int argc, char *argv[])
         {
             for (int i = 0; i < VALUE_CNT; i++)
             {
-
                 errcnt = 0;
                 if (TCA9548SetChannel(HAMSTRONE_GLOBAL_I2C_PORT, c) < 0)
                     errcnt++;
@@ -225,19 +226,29 @@ int TCA9548SetChannel(int fd, uint8_t chan)
 int SPIWriteSingle(int fd, enum spi_mode_e mode, uint8_t regaddr, uint8_t value)
 {
     struct spi_sequence_s seq;
-    struct spi_trans_s trans[1];
-    uint8_t tx[2] = {regaddr, value};
+    struct spi_trans_s trans;
+    uint8_t tx[4] = { 0 };
+    uint8_t rx[4] = { 0 };
 
-    trans[0].nwords = 2;
-    trans[0].txbuffer = tx;
+    tx[0] = regaddr;
+    tx[1] = value;
 
-    seq.dev = SPIDEVTYPE_USER;
+    trans.delay = 0;
+    trans.deselect = true;
+    trans.nwords = 1;
+    trans.txbuffer = tx;
+    trans.rxbuffer = rx;
+
+    seq.dev = SPIDEV_USER(0);
     seq.mode = mode;
     seq.nbits = 8;
     seq.ntrans = 1;
-    seq.trans = trans;
-
-    return ioctl(fd, SPIIOC_TRANSFER, &seq);
+    seq.trans = &trans;
+    seq.frequency = 4000000;  
+    HAMSTERTONGUE_Debugf("ioctl\n");
+    int ret = ioctl(fd, SPIIOC_TRANSFER, &seq);
+    HAMSTERTONGUE_Debugf("ioctl ok\n");
+    return ret;
 }
 
 int SPIReadSingle(int fd, enum spi_mode_e mode, uint8_t regaddr, uint8_t *buf)
@@ -246,18 +257,23 @@ int SPIReadSingle(int fd, enum spi_mode_e mode, uint8_t regaddr, uint8_t *buf)
     struct spi_trans_s trans[2];
     uint8_t tx[1] = {regaddr};
 
+    trans[0].delay = 0;
+    trans[0].deselect = true;
     trans[0].nwords = 1;
     trans[0].txbuffer = tx;
 
+    trans[1].delay = 0;
+    trans[1].deselect = true;
     trans[1].nwords = 1;
     trans[1].rxbuffer = buf;
 
-    seq.dev = SPIDEVTYPE_USER;
+    seq.dev = SPIDEV_USER(0);
     seq.mode = mode;
     seq.nbits = 8;
     seq.ntrans = 2;
     seq.trans = trans;
-
+    seq.frequency = 4000000;  
+ 
     return ioctl(fd, SPIIOC_TRANSFER, &seq);
 }
 
