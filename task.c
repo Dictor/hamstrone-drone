@@ -7,21 +7,13 @@ double kD[MAX_SIZE] = {0.0408, 0.0408};
 
 void pidControl(double AngX, double AngY, double *pidAssemble)
 {
-    double degree[MAX_SIZE] = {
-        0.0,
-    };
+    double degree[MAX_SIZE] = { 0.0,};
     degree[0] = AngX;
     degree[1] = AngY;
 
-    static double prevInput[MAX_SIZE] = {
-        0.0,
-    };
-    static double controlI[MAX_SIZE] = {
-        0.0,
-    };
-    double controlP[MAX_SIZE], controlD[MAX_SIZE], dInput[MAX_SIZE], error[MAX_SIZE], desired[MAX_SIZE] = {
-                                                                                          10.0,
-                                                                                      };
+    static double prevInput[MAX_SIZE] = {0.0, };
+    static double controlI[MAX_SIZE] = {0.0, };
+    double controlP[MAX_SIZE], controlD[MAX_SIZE], dInput[MAX_SIZE], error[MAX_SIZE], desired[MAX_SIZE] = {10.0, };
     double time = 0.01;
     int i;
 
@@ -64,12 +56,8 @@ int tskUpdateValue(int argc, char *argv[])
     clock_gettime(CLOCK_MONOTONIC, &startTs);
 
 #define VALUE_CNT 1
-    uint8_t devAddr[VALUE_CNT] = {
-        HAMSTRONE_CONFIG_I2C_ADDRESS_SO6203,
-    };
-    uint8_t regAddr[VALUE_CNT] = {
-        HAMSTRONE_CONFIG_SO6203_ADCW_H,
-    };
+    uint8_t devAddr[VALUE_CNT] = {HAMSTRONE_CONFIG_I2C_ADDRESS_SO6203, };
+    uint8_t regAddr[VALUE_CNT] = {HAMSTRONE_CONFIG_SO6203_ADCW_H, };
     uint8_t valuel, valueh;
     uint16_t value[VALUE_CNT];
     double accelX, accelY, accelZ, gyroX, gyroY, gyroZ;
@@ -190,9 +178,7 @@ int tskParsingGPS(int argc, char *argv[])
 {
 #define MSG_BUF_SIZE 33
     int assembleCnt = 0, i = 0, bufLen = 0, assembleLen = 0, Len = 0;
-    char Assemble_Data[200] = {
-        0,
-    };
+    char Assemble_Data[200] = {0, };
     char buf[MSG_BUF_SIZE];
     while (1)
     {
@@ -208,6 +194,100 @@ int tskParsingGPS(int argc, char *argv[])
         Len = strlen(Assemble_Data);
         assembleCnt = Checking(Assemble_Data, Len, assembleCnt);
         HAMSTRONE_WriteValueStore(9, (uint32_t)assembleCnt);
+        usleep(200000);
+    }
+    return 0;
+}
+
+int Distance(int argc, char *argv[])
+{
+#define MSG_BUF_SIZE_DISTANCE 64
+	uint8_t assemble[500] = { 0, };
+    uint8_t buf[MSG_BUF_SIZE_DISTANCE];
+	int dataStart, dataEnd, distanceLow, distanceHigh, dataSplit, dataLen, first, second, temp, exsist, i, j, k, num;
+    while (1)
+    {
+        memset(buf, 0x00, 33);
+        read(HAMSTRONE_GLOBAL_SERIAL_PORT, buf, 32);
+        dataSplit = 0;
+		exsist = 0;
+		j = 0;
+		k = 1;
+		for (i = first; i < second; i++)
+		{
+			buf[j] = data[i];
+			j++;
+		}
+		for (i = 0; i < j; i++)
+			assemble[i] = buf[i];
+		while (1)
+		{
+			if (assemble[i] == '\0')
+			{
+				dataLen = i;
+				break;
+			}
+			else
+				i++;
+		}
+		while (1)
+		{
+			for (i = 0; i < dataLen; i++)
+			{
+				exsist = 1;
+				if (assemble[i] == 0x59)
+				{
+					if (assemble[i + 1] == 0x59)
+					{
+						dataStart = i;
+						if (dataSplit == 1)
+						{
+							dataEnd = i - 1;
+							break;
+						}
+						else
+						{
+							dataSplit = 1;
+							distanceLow = i + 2;
+							distanceHigh = i + 3;
+						}
+					}
+					else
+						continue;
+				}
+			}
+			dataSplit = 0;
+			j = 0;
+			k = 1;
+			while (1)
+			{
+				if (assemble[i] == '\0')
+				{
+					dataLen = i;
+					break;
+				}
+				else
+					i++;
+			}
+			if (exsist == 0)
+			{
+				for (i = 0; i < dataLen; i++)
+					assemble[i] = '\0';
+				break;
+			}
+			if (dataLen < 15 || assemble[0]=='\0')
+				break;
+			for (i = 0; i <= dataLen; i++)
+			{
+				if (i < dataLen - dataEnd)
+				{
+					assemble[i] = assemble[dataEnd + k];
+					k++;
+				}
+				else
+					assemble[i] = '\0';
+			}
+		}
         usleep(200000);
     }
     return 0;
