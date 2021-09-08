@@ -2,6 +2,7 @@
 
 sem_t *WriteSemaphore = NULL;
 int defaultFd = -1;
+struct timespec timeout = {0, 100000};
 
 void HAMSTERTONGUE_SetWriteSemaphore(sem_t *sem)
 {
@@ -63,8 +64,9 @@ uint8_t *HAMSTERTONGUE_SerializeMessage(HAMSTERTONGUE_Message *msg)
 ssize_t HAMSTERTONGUE_WriteMessage(int fd, HAMSTERTONGUE_Message *msg)
 {
 	uint8_t *serialMsg = HAMSTERTONGUE_SerializeMessage(msg);
-	if (WriteSemaphore != NULL)
-		sem_wait(WriteSemaphore);
+	if (WriteSemaphore != NULL) {
+		if (sem_timedwait(WriteSemaphore, &timeout) < 0) return EAGAIN;
+	}
 	ssize_t res = pwrite(fd, serialMsg, HAMSTERTONGUE_GetMessageLength(msg), 0);
 	if (WriteSemaphore != NULL)
 		sem_post(WriteSemaphore);
