@@ -79,12 +79,8 @@ int tskUpdateValue(int argc, char *argv[])
     double pidAssemble[MAX_SIZE];
 
     int errcnt;
-
     /* initialize mpu6050 */
-    HAMSTERTONGUE_Debugf("start\n");
     if (SPIWriteSingle(HAMSTRONE_GLOBAL_SPI_PORT, SPIDEV_MODE2, HAMSTRONE_CONFIG_MPU6050_PWR_MGMT_1, 0b00000000) < 0)
-    {
-            HAMSTERTONGUE_Debugf("err\n");
         HAMSTERTONGUE_WriteAndFreeMessage(
             HAMSTRONE_GLOBAL_TELEMETRY_PORT,
             HAMSTERTONGUE_NewFormatStringMessage(
@@ -93,8 +89,7 @@ int tskUpdateValue(int argc, char *argv[])
                 24,
                 "fd=%d mpu6050 pwr_mgmt_1",
                 HAMSTRONE_GLOBAL_I2C_PORT));
-    }
-        HAMSTERTONGUE_Debugf("end\n");
+
 /* initialize SO6203 */
 #define SO6203_CHAN_START 0
 #define SO6203_CHAN_END 0
@@ -227,8 +222,8 @@ int SPIWriteSingle(int fd, enum spi_mode_e mode, uint8_t regaddr, uint8_t value)
 {
     struct spi_sequence_s seq;
     struct spi_trans_s trans;
-    uint8_t tx[4] = { 0 };
-    uint8_t rx[4] = { 0 };
+    uint8_t tx[4] = {0};
+    uint8_t rx[4] = {0};
 
     tx[0] = regaddr;
     tx[1] = value;
@@ -244,10 +239,8 @@ int SPIWriteSingle(int fd, enum spi_mode_e mode, uint8_t regaddr, uint8_t value)
     seq.nbits = 8;
     seq.ntrans = 1;
     seq.trans = &trans;
-    seq.frequency = 4000000;  
-    HAMSTERTONGUE_Debugf("ioctl\n");
+    seq.frequency = 4000000;
     int ret = ioctl(fd, SPIIOC_TRANSFER, &seq);
-    HAMSTERTONGUE_Debugf("ioctl ok\n");
     return ret;
 }
 
@@ -272,8 +265,8 @@ int SPIReadSingle(int fd, enum spi_mode_e mode, uint8_t regaddr, uint8_t *buf)
     seq.nbits = 8;
     seq.ntrans = 2;
     seq.trans = trans;
-    seq.frequency = 4000000;  
- 
+    seq.frequency = 4000000;
+
     return ioctl(fd, SPIIOC_TRANSFER, &seq);
 }
 
