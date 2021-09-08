@@ -86,7 +86,7 @@ int hamstrone_main(int argc, FAR char *argv[])
   /* Start tasks */
   task_create("tskTransmitValue", 100, 2048, &tskTransmitValue, NULL);
   task_create("tskUpdateValue", 100, 2048, &tskUpdateValue, NULL);
-  task_create("tskParsingGPS", 100, 14336, &tskParsingGPS, NULL);
+  //task_create("tskParsingGPS", 100, 14336, &tskParsingGPS, NULL);
   
   /* Initialize complete */
   HAMSTERTONGUE_WriteAndFreeMessage(
