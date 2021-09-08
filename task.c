@@ -7,13 +7,21 @@ double kD[MAX_SIZE] = {0.0408, 0.0408};
 
 void pidControl(double AngX, double AngY, double *pidAssemble)
 {
-    double degree[MAX_SIZE] = { 0.0,};
+    double degree[MAX_SIZE] = {
+        0.0,
+    };
     degree[0] = AngX;
     degree[1] = AngY;
 
-    static double prevInput[MAX_SIZE] = {0.0, };
-    static double controlI[MAX_SIZE] = {0.0, };
-    double controlP[MAX_SIZE], controlD[MAX_SIZE], dInput[MAX_SIZE], error[MAX_SIZE], desired[MAX_SIZE] = {10.0, };
+    static double prevInput[MAX_SIZE] = {
+        0.0,
+    };
+    static double controlI[MAX_SIZE] = {
+        0.0,
+    };
+    double controlP[MAX_SIZE], controlD[MAX_SIZE], dInput[MAX_SIZE], error[MAX_SIZE], desired[MAX_SIZE] = {
+                                                                                          10.0,
+                                                                                      };
     double time = 0.01;
     int i;
 
@@ -55,11 +63,29 @@ int tskUpdateValue(int argc, char *argv[])
     struct timespec startTs, currentTs, taskendTs;
     clock_gettime(CLOCK_MONOTONIC, &startTs);
 
-#define VALUE_CNT 1
-    uint8_t devAddr[VALUE_CNT] = {HAMSTRONE_CONFIG_I2C_ADDRESS_SO6203, };
-    uint8_t regAddr[VALUE_CNT] = {HAMSTRONE_CONFIG_SO6203_ADCW_H, };
+#define SO6203_CHAN_START 0
+#define SO6203_CHAN_END 0
+#define SO6203_COUNT SO6203_CHAN_END - SO6203_CHAN_START + 1
+/* count of register, one count means set of high and low byte register (2 bytes)   */
+#define SO6203_REGISTER_CNT 1
+#define MPU6050_REGISTER_CNT 6
+#define SO6203_VALUE_CNT SO6203_REGISTER_CNT *SO6203_COUNT
+#define VALUE_COUNT SO6203_VALUE_CNT + MPU6050_REGISTER_CNT
+#define MPU6050_SPI_MODE SPIDEV_MODE2
+
+    const uint8_t devAddr[SO6203_VALUE_CNT] = {
+        HAMSTRONE_CONFIG_I2C_ADDRESS_SO6203,
+    };
+    const uint8_t regAddr[VALUE_COUNT] = {
+        HAMSTRONE_CONFIG_SO6203_ADCW_H,
+        HAMSTRONE_CONFIG_MPU6050_ACCEL_XOUT_H,
+        HAMSTRONE_CONFIG_MPU6050_ACCEL_YOUT_H,
+        HAMSTRONE_CONFIG_MPU6050_ACCEL_ZOUT_H,
+        HAMSTRONE_CONFIG_MPU6050_GYRO_XOUT_H,
+        HAMSTRONE_CONFIG_MPU6050_GYRO_YOUT_H,
+        HAMSTRONE_CONFIG_MPU6050_GYRO_ZOUT_H};
     uint8_t valuel, valueh;
-    uint16_t value[VALUE_CNT];
+    uint16_t value[VALUE_COUNT];
     double accelX, accelY, accelZ, gyroX, gyroY, gyroZ;
     double accelXsq, accelYsq, accelZsq, accelAngX, accelAngY;
     double gyroAngX, gyroAngY, gyroAngZ;
@@ -68,7 +94,7 @@ int tskUpdateValue(int argc, char *argv[])
 
     int errcnt;
     /* initialize mpu6050 */
-    if (SPIWriteSingle(HAMSTRONE_GLOBAL_SPI_PORT, SPIDEV_MODE2, HAMSTRONE_CONFIG_MPU6050_PWR_MGMT_1, 0b00000000) < 0)
+    if (SPIWriteSingle(HAMSTRONE_GLOBAL_SPI_PORT, MPU6050_SPI_MODE, HAMSTRONE_CONFIG_MPU6050_PWR_MGMT_1, 0b00000000) < 0)
         HAMSTERTONGUE_WriteAndFreeMessage(
             HAMSTRONE_GLOBAL_TELEMETRY_PORT,
             HAMSTERTONGUE_NewFormatStringMessage(
@@ -78,9 +104,7 @@ int tskUpdateValue(int argc, char *argv[])
                 "fd=%d mpu6050 pwr_mgmt_1",
                 HAMSTRONE_GLOBAL_I2C_PORT));
 
-/* initialize SO6203 */
-#define SO6203_CHAN_START 0
-#define SO6203_CHAN_END 0
+    /* initialize SO6203 */
     for (int c = SO6203_CHAN_START; c <= SO6203_CHAN_END; c++)
     {
         TCA9548SetChannel(HAMSTRONE_GLOBAL_I2C_PORT, c);
@@ -103,17 +127,17 @@ int tskUpdateValue(int argc, char *argv[])
         clock_gettime(CLOCK_MONOTONIC, &currentTs);
         HAMSTRONE_WriteValueStore(0, (uint32_t)(currentTs.tv_sec - startTs.tv_sec));
 
-        /* update i2c sensor value */
+        /* update so6203 sensor value */
         for (int c = SO6203_CHAN_START; c <= SO6203_CHAN_END; c++)
         {
-            for (int i = 0; i < VALUE_CNT; i++)
+            for (int i = 0; i < SO6203_REGISTER_CNT; i++)
             {
                 errcnt = 0;
                 if (TCA9548SetChannel(HAMSTRONE_GLOBAL_I2C_PORT, c) < 0)
                     errcnt++;
-                if (I2CReadSingle(HAMSTRONE_GLOBAL_I2C_PORT, devAddr[i], regAddr[i], &valueh) < 0)
+                if (I2CReadSingle(HAMSTRONE_GLOBAL_I2C_PORT, devAddr[c + i], regAddr[c + i], &valueh) < 0)
                     errcnt++;
-                if (I2CReadSingle(HAMSTRONE_GLOBAL_I2C_PORT, devAddr[i], regAddr[i] + 1, &valuel) < 0)
+                if (I2CReadSingle(HAMSTRONE_GLOBAL_I2C_PORT, devAddr[c + i], regAddr[c + i] + 1, &valuel) < 0)
                     errcnt++;
                 if (errcnt > 0)
                 {
@@ -130,14 +154,34 @@ int tskUpdateValue(int argc, char *argv[])
                 value[c + i] = (valueh << 8) | valuel;
             }
         }
+
+        for (int i = SO6203_VALUE_CNT; i < SO6203_VALUE_CNT + MPU6050_REGISTER_CNT; i++)
+        {
+            if (SPIReadSingle(HAMSTRONE_GLOBAL_SPI_PORT, MPU6050_SPI_MODE, regAddr[i], &valueh) < 0)
+                errcnt++;
+            if (SPIReadSingle(HAMSTRONE_GLOBAL_SPI_PORT, MPU6050_SPI_MODE, regAddr[i] + 1, &valuel) < 0)
+                errcnt++;
+            if (errcnt > 0)
+            {
+                HAMSTERTONGUE_WriteAndFreeMessage(
+                    HAMSTRONE_GLOBAL_TELEMETRY_PORT,
+                    HAMSTERTONGUE_NewFormatStringMessage(
+                        HAMSTERTONGUE_MESSAGE_VERB_SIGNAL,
+                        HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_I2CREADFAIL,
+                        24,
+                        "fd=%d dev=%d errcnt=%d",
+                        HAMSTRONE_GLOBAL_SPI_PORT, devAddr[i], errcnt));
+                continue;
+            }
+            value[i] = (valueh << 8) | valuel;
+        }
         /* calculate gyro and accel angle*/
-        /*
-        accelX = (int16_t)(~value[0] + 1) / HAMSTRONE_CONFIG_MPU6050_ACCEL_COEFFICIENT;
-        accelY = (int16_t)(~value[1] + 1) / HAMSTRONE_CONFIG_MPU6050_ACCEL_COEFFICIENT;
-        accelZ = (int16_t)(~value[2] + 1) / HAMSTRONE_CONFIG_MPU6050_ACCEL_COEFFICIENT;
-        gyroX = (int16_t)(~value[3] + 1) / HAMSTRONE_CONFIG_MPU6050_GYRO_COEFFICIENT;
-        gyroY = (int16_t)(~value[4] + 1) / HAMSTRONE_CONFIG_MPU6050_GYRO_COEFFICIENT;
-        gyroZ = (int16_t)(~value[5] + 1) / HAMSTRONE_CONFIG_MPU6050_GYRO_COEFFICIENT;
+        accelX = (int16_t)(~value[SO6203_VALUE_CNT] + 1) / HAMSTRONE_CONFIG_MPU6050_ACCEL_COEFFICIENT;
+        accelY = (int16_t)(~value[SO6203_VALUE_CNT + 1] + 1) / HAMSTRONE_CONFIG_MPU6050_ACCEL_COEFFICIENT;
+        accelZ = (int16_t)(~value[SO6203_VALUE_CNT + 2] + 1) / HAMSTRONE_CONFIG_MPU6050_ACCEL_COEFFICIENT;
+        gyroX = (int16_t)(~value[SO6203_VALUE_CNT + 3] + 1) / HAMSTRONE_CONFIG_MPU6050_GYRO_COEFFICIENT;
+        gyroY = (int16_t)(~value[SO6203_VALUE_CNT + 4] + 1) / HAMSTRONE_CONFIG_MPU6050_GYRO_COEFFICIENT;
+        gyroZ = (int16_t)(~value[SO6203_VALUE_CNT + 5] + 1) / HAMSTRONE_CONFIG_MPU6050_GYRO_COEFFICIENT;
         accelXsq = pow(accelX, 2);
         accelYsq = pow(accelY, 2);
         accelZsq = pow(accelZ, 2);
@@ -153,6 +197,7 @@ int tskUpdateValue(int argc, char *argv[])
         if (filterAngY >= 10000)
             filterAngY = 0;
 
+        /* process pid control*/
         pidControl(filterAngX, filterAngY, pidAssemble);
 
         HAMSTRONE_WriteValueStore(2, (uint32_t)(filterAngX * 100 + 18000));
@@ -163,7 +208,6 @@ int tskUpdateValue(int argc, char *argv[])
         HAMSTRONE_WriteValueStore(7, (uint32_t)(10 * (pidAssemble[0] - pidAssemble[1]) + 200));
         HAMSTRONE_WriteValueStore(8, (uint32_t)(10 * (-pidAssemble[0] + pidAssemble[1]) + 200));
         HAMSTRONE_WriteValueStore(9, (uint32_t)(10 * (-pidAssemble[0] - pidAssemble[1]) + 200));
-        */
 
         HAMSTRONE_WriteValueStore(10, (uint32_t)(value[0]));
 
@@ -178,7 +222,9 @@ int tskParsingGPS(int argc, char *argv[])
 {
 #define MSG_BUF_SIZE 33
     int assembleCnt = 0, i = 0, bufLen = 0, assembleLen = 0, Len = 0;
-    char Assemble_Data[200] = {0, };
+    char Assemble_Data[200] = {
+        0,
+    };
     char buf[MSG_BUF_SIZE];
     while (1)
     {
@@ -202,92 +248,94 @@ int tskParsingGPS(int argc, char *argv[])
 int Distance(int argc, char *argv[])
 {
 #define MSG_BUF_SIZE_DISTANCE 64
-	uint8_t assemble[500] = { 0, };
+    uint8_t assemble[500] = {
+        0,
+    };
     uint8_t buf[MSG_BUF_SIZE_DISTANCE];
-	int dataStart, dataEnd, distanceLow, distanceHigh, dataSplit, dataLen, first, second, temp, exsist, i, j, k, num;
+    int dataStart, dataEnd, distanceLow, distanceHigh, dataSplit, dataLen, first, second, temp, exsist, i, j, k, num;
     while (1)
     {
         memset(buf, 0x00, 33);
         read(HAMSTRONE_GLOBAL_SERIAL_PORT, buf, 32);
         dataSplit = 0;
-		exsist = 0;
-		j = 0;
-		k = 1;
-		for (i = first; i < second; i++)
-		{
-			buf[j] = data[i];
-			j++;
-		}
-		for (i = 0; i < j; i++)
-			assemble[i] = buf[i];
-		while (1)
-		{
-			if (assemble[i] == '\0')
-			{
-				dataLen = i;
-				break;
-			}
-			else
-				i++;
-		}
-		while (1)
-		{
-			for (i = 0; i < dataLen; i++)
-			{
-				exsist = 1;
-				if (assemble[i] == 0x59)
-				{
-					if (assemble[i + 1] == 0x59)
-					{
-						dataStart = i;
-						if (dataSplit == 1)
-						{
-							dataEnd = i - 1;
-							break;
-						}
-						else
-						{
-							dataSplit = 1;
-							distanceLow = i + 2;
-							distanceHigh = i + 3;
-						}
-					}
-					else
-						continue;
-				}
-			}
-			dataSplit = 0;
-			j = 0;
-			k = 1;
-			while (1)
-			{
-				if (assemble[i] == '\0')
-				{
-					dataLen = i;
-					break;
-				}
-				else
-					i++;
-			}
-			if (exsist == 0)
-			{
-				for (i = 0; i < dataLen; i++)
-					assemble[i] = '\0';
-				break;
-			}
-			if (dataLen < 15 || assemble[0]=='\0')
-				break;
-			for (i = 0; i <= dataLen; i++)
-			{
-				if (i < dataLen - dataEnd)
-				{
-					assemble[i] = assemble[dataEnd + k];
-					k++;
-				}
-				else
-					assemble[i] = '\0';
-			}
-		}
+        exsist = 0;
+        j = 0;
+        k = 1;
+        for (i = first; i < second; i++)
+        {
+            buf[j] = data[i];
+            j++;
+        }
+        for (i = 0; i < j; i++)
+            assemble[i] = buf[i];
+        while (1)
+        {
+            if (assemble[i] == '\0')
+            {
+                dataLen = i;
+                break;
+            }
+            else
+                i++;
+        }
+        while (1)
+        {
+            for (i = 0; i < dataLen; i++)
+            {
+                exsist = 1;
+                if (assemble[i] == 0x59)
+                {
+                    if (assemble[i + 1] == 0x59)
+                    {
+                        dataStart = i;
+                        if (dataSplit == 1)
+                        {
+                            dataEnd = i - 1;
+                            break;
+                        }
+                        else
+                        {
+                            dataSplit = 1;
+                            distanceLow = i + 2;
+                            distanceHigh = i + 3;
+                        }
+                    }
+                    else
+                        continue;
+                }
+            }
+            dataSplit = 0;
+            j = 0;
+            k = 1;
+            while (1)
+            {
+                if (assemble[i] == '\0')
+                {
+                    dataLen = i;
+                    break;
+                }
+                else
+                    i++;
+            }
+            if (exsist == 0)
+            {
+                for (i = 0; i < dataLen; i++)
+                    assemble[i] = '\0';
+                break;
+            }
+            if (dataLen < 15 || assemble[0] == '\0')
+                break;
+            for (i = 0; i <= dataLen; i++)
+            {
+                if (i < dataLen - dataEnd)
+                {
+                    assemble[i] = assemble[dataEnd + k];
+                    k++;
+                }
+                else
+                    assemble[i] = '\0';
+            }
+        }
         usleep(200000);
     }
     return 0;
