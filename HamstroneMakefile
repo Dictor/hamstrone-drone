@@ -1,0 +1,51 @@
+NPROCS:=1
+NPROCS:=$(shell grep -c ^processor /proc/cpuinfo)
+
+help:
+	@echo 'hamstrone environment makefile'
+	@echo 'usage: make [command]'
+	@echo 'command:'
+	@echo '* build: build nuttx binary with hamstrone and included apps'
+	@echo '* config: execute menuconfig'
+	@echo '* flash: flash builded binary to stml432kc'
+	@echo '* fixmtp: fix "multiple target pattern" error. building is needed after execute it'
+	@echo '* build-gnd: build ground'
+	@echo '* PORT=COMn exe-gnd: execute ground (PORT assigning is necessary!, ex: PORT=COM3 exe-gnd)'
+	@echo '* clean: clean build outputs'
+	@echo '* cnb: execute clean and build'
+
+build:
+	@echo 'processor count : $(NPROCS)'
+	@make -C nuttx -j$(NPROCS)
+
+config:
+	@make -C nuttx menuconfig
+
+clean:
+	@make -C nuttx clean
+
+cnb: clean build
+
+flash:
+	@cd nuttx/tools/openocd && ./openocd -f interface/stlink-v2.cfg -f target/stm32l4x.cfg -c 'init' -c 'program ../../nuttx.hex verify reset' -c 'shutdown'
+
+fixmtp:
+	@find . -name 'Make.dep' -exec rm {} \;
+
+build-gnd:
+	@cd ground && go build -v
+
+exe-gnd:
+	@echo 'selected COM port is $(PORT)'
+	@cd ground && ./hamstrone_ground -debug -sport=$(PORT)
+
+git-checkout:
+	@cd nuttx && git checkout nuttx
+	@cd ground && git checkout master
+	@cd apps/hamstrone && git checkout master
+
+apply-config:
+	@cp apps/hamstrone/.config nuttx/.config
+
+apply-makefile:
+	@cp apps/hamstrone/HamstroneMakefile Makefile
