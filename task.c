@@ -71,19 +71,19 @@ int tskUpdateValue(int argc, char *argv[])
 #define MPU6050_REGISTER_CNT 6
 #define SO6203_VALUE_CNT SO6203_REGISTER_CNT *SO6203_COUNT
 #define VALUE_COUNT SO6203_VALUE_CNT + MPU6050_REGISTER_CNT
-#define MPU6050_SPI_MODE SPIDEV_MODE2
+#define MPU6050_SPI_MODE SPIDEV_MODE3
 
     const uint8_t devAddr[SO6203_VALUE_CNT] = {
         HAMSTRONE_CONFIG_I2C_ADDRESS_SO6203,
     };
     const uint8_t regAddr[VALUE_COUNT] = {
         HAMSTRONE_CONFIG_SO6203_ADCW_H,
-        HAMSTRONE_CONFIG_MPU6050_ACCEL_XOUT_H,
-        HAMSTRONE_CONFIG_MPU6050_ACCEL_YOUT_H,
-        HAMSTRONE_CONFIG_MPU6050_ACCEL_ZOUT_H,
-        HAMSTRONE_CONFIG_MPU6050_GYRO_XOUT_H,
-        HAMSTRONE_CONFIG_MPU6050_GYRO_YOUT_H,
-        HAMSTRONE_CONFIG_MPU6050_GYRO_ZOUT_H};
+        MPUREG_ACCEL_XOUT_H,
+        MPUREG_ACCEL_YOUT_H,
+        MPUREG_ACCEL_ZOUT_H,
+        MPUREG_GYRO_XOUT_H,
+        MPUREG_GYRO_YOUT_H,
+        MPUREG_GYRO_ZOUT_H};
     uint8_t valuel, valueh;
     uint16_t value[VALUE_COUNT];
     double accelX, accelY, accelZ, gyroX, gyroY, gyroZ;
@@ -94,17 +94,17 @@ int tskUpdateValue(int argc, char *argv[])
 
     int errcnt;
     /* initialize mpu6050 */
-    if (SPIWriteSingle(HAMSTRONE_GLOBAL_SPI_PORT, MPU6050_SPI_MODE, HAMSTRONE_CONFIG_MPU6050_PWR_MGMT_1, 0b00000000) < 0)
-        HAMSTERTONGUE_WriteAndFreeMessage(
-            HAMSTRONE_GLOBAL_TELEMETRY_PORT,
-            HAMSTERTONGUE_NewFormatStringMessage(
-                HAMSTERTONGUE_MESSAGE_VERB_SIGNAL,
-                HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_I2CREADFAIL,
-                24,
-                "fd=%d mpu6050 pwr_mgmt_1",
-                HAMSTRONE_GLOBAL_I2C_PORT));
+    uint8_t whoami;
+    SPIReadSingle(HAMSTRONE_GLOBAL_SPI_PORT, MPU6050_SPI_MODE, MPUREG_WHOAMI | READ_FLAG, &whoami);
+    HAMSTERTONGUE_Debugf("mpu whoami: %d", whoami);
+    SPIWriteSingle(HAMSTRONE_GLOBAL_SPI_PORT, MPU6050_SPI_MODE, MPUREG_PWR_MGMT_1, BIT_H_RESET);
+    SPIWriteSingle(HAMSTRONE_GLOBAL_SPI_PORT, MPU6050_SPI_MODE, MPUREG_PWR_MGMT_1, 0x01);
+    SPIWriteSingle(HAMSTRONE_GLOBAL_SPI_PORT, MPU6050_SPI_MODE, MPUREG_PWR_MGMT_2, 0x00);
+    SPIWriteSingle(HAMSTRONE_GLOBAL_SPI_PORT, MPU6050_SPI_MODE, MPUREG_ACCEL_CONFIG, BITS_FS_2G);
+    SPIWriteSingle(HAMSTRONE_GLOBAL_SPI_PORT, MPU6050_SPI_MODE, MPUREG_GYRO_CONFIG, BITS_FS_250DPS);
 
     /* initialize SO6203 */
+    /*
     for (int c = SO6203_CHAN_START; c <= SO6203_CHAN_END; c++)
     {
         TCA9548SetChannel(HAMSTRONE_GLOBAL_I2C_PORT, c);
@@ -120,6 +120,7 @@ int tskUpdateValue(int argc, char *argv[])
                     HAMSTRONE_GLOBAL_I2C_PORT, c));
         }
     }
+    */
 
     while (1)
     {
@@ -128,6 +129,7 @@ int tskUpdateValue(int argc, char *argv[])
         HAMSTRONE_WriteValueStore(0, (uint32_t)(currentTs.tv_sec - startTs.tv_sec));
 
         /* update so6203 sensor value */
+        /*
         for (int c = SO6203_CHAN_START; c <= SO6203_CHAN_END; c++)
         {
             for (int i = 0; i < SO6203_REGISTER_CNT; i++)
@@ -146,20 +148,22 @@ int tskUpdateValue(int argc, char *argv[])
                         HAMSTERTONGUE_NewFormatStringMessage(
                             HAMSTERTONGUE_MESSAGE_VERB_SIGNAL,
                             HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_I2CREADFAIL,
-                            24,
-                            "fd=%d dev=%d errcnt=%d",
+                            32,
+                            "fd=%d dev=%d errcnt=%d so6203",
                             HAMSTRONE_GLOBAL_I2C_PORT, devAddr[i], errcnt));
                     continue;
                 }
                 value[c + i] = (valueh << 8) | valuel;
             }
         }
+        */
 
         for (int i = SO6203_VALUE_CNT; i < SO6203_VALUE_CNT + MPU6050_REGISTER_CNT; i++)
         {
-            if (SPIReadSingle(HAMSTRONE_GLOBAL_SPI_PORT, MPU6050_SPI_MODE, regAddr[i], &valueh) < 0)
+            errcnt = 0;
+            if (SPIReadSingle(HAMSTRONE_GLOBAL_SPI_PORT, MPU6050_SPI_MODE, regAddr[i] | READ_FLAG, &valueh) < 0)
                 errcnt++;
-            if (SPIReadSingle(HAMSTRONE_GLOBAL_SPI_PORT, MPU6050_SPI_MODE, regAddr[i] + 1, &valuel) < 0)
+            if (SPIReadSingle(HAMSTRONE_GLOBAL_SPI_PORT, MPU6050_SPI_MODE, (regAddr[i] + 1) | READ_FLAG, &valuel) < 0)
                 errcnt++;
             if (errcnt > 0)
             {
@@ -168,20 +172,23 @@ int tskUpdateValue(int argc, char *argv[])
                     HAMSTERTONGUE_NewFormatStringMessage(
                         HAMSTERTONGUE_MESSAGE_VERB_SIGNAL,
                         HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_I2CREADFAIL,
-                        24,
-                        "fd=%d dev=%d errcnt=%d",
-                        HAMSTRONE_GLOBAL_SPI_PORT, devAddr[i], errcnt));
+                        32,
+                        "fd=%d errcnt=%d mpu",
+                        HAMSTRONE_GLOBAL_SPI_PORT, errcnt));
                 continue;
             }
             value[i] = (valueh << 8) | valuel;
         }
+
         /* calculate gyro and accel angle*/
+
         accelX = (int16_t)(~value[SO6203_VALUE_CNT] + 1) / HAMSTRONE_CONFIG_MPU6050_ACCEL_COEFFICIENT;
         accelY = (int16_t)(~value[SO6203_VALUE_CNT + 1] + 1) / HAMSTRONE_CONFIG_MPU6050_ACCEL_COEFFICIENT;
         accelZ = (int16_t)(~value[SO6203_VALUE_CNT + 2] + 1) / HAMSTRONE_CONFIG_MPU6050_ACCEL_COEFFICIENT;
         gyroX = (int16_t)(~value[SO6203_VALUE_CNT + 3] + 1) / HAMSTRONE_CONFIG_MPU6050_GYRO_COEFFICIENT;
         gyroY = (int16_t)(~value[SO6203_VALUE_CNT + 4] + 1) / HAMSTRONE_CONFIG_MPU6050_GYRO_COEFFICIENT;
         gyroZ = (int16_t)(~value[SO6203_VALUE_CNT + 5] + 1) / HAMSTRONE_CONFIG_MPU6050_GYRO_COEFFICIENT;
+
         accelXsq = pow(accelX, 2);
         accelYsq = pow(accelY, 2);
         accelZsq = pow(accelZ, 2);
@@ -192,6 +199,7 @@ int tskUpdateValue(int argc, char *argv[])
         gyroAngZ += gyroZ * HAMSTRONE_CONFIG_MPU6050_GYRO_TIMEDELTA;
         filterAngX = accelAngX * HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT + (1 - HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT) * gyroAngX;
         filterAngY = accelAngY * HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT + (1 - HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT) * gyroAngY;
+
         if (filterAngX >= 10000)
             filterAngX = 0;
         if (filterAngY >= 10000)
@@ -263,7 +271,7 @@ int Distance(int argc, char *argv[])
         k = 1;
         for (i = first; i < second; i++)
         {
-            buf[j] = data[i];
+            //buf[j] = data[i];
             j++;
         }
         for (i = 0; i < j; i++)
@@ -339,103 +347,4 @@ int Distance(int argc, char *argv[])
         usleep(200000);
     }
     return 0;
-}
-
-int TCA9548SetChannel(int fd, uint8_t chan)
-{
-    return I2CWriteSingle(fd, HAMSTRONE_CONFIG_I2C_ADDRESS_TCA9548, HAMSTRONE_CONFIG_TCA9548_CHAN, 1 << chan);
-}
-
-int SPIWriteSingle(int fd, enum spi_mode_e mode, uint8_t regaddr, uint8_t value)
-{
-    struct spi_sequence_s seq;
-    struct spi_trans_s trans;
-    uint8_t tx[4] = {0};
-    uint8_t rx[4] = {0};
-
-    tx[0] = regaddr;
-    tx[1] = value;
-
-    trans.delay = 0;
-    trans.deselect = true;
-    trans.nwords = 1;
-    trans.txbuffer = tx;
-    trans.rxbuffer = rx;
-
-    seq.dev = SPIDEV_USER(0);
-    seq.mode = mode;
-    seq.nbits = 8;
-    seq.ntrans = 1;
-    seq.trans = &trans;
-    seq.frequency = 4000000;
-    int ret = ioctl(fd, SPIIOC_TRANSFER, &seq);
-    return ret;
-}
-
-int SPIReadSingle(int fd, enum spi_mode_e mode, uint8_t regaddr, uint8_t *buf)
-{
-    struct spi_sequence_s seq;
-    struct spi_trans_s trans[2];
-    uint8_t tx[1] = {regaddr};
-
-    trans[0].delay = 0;
-    trans[0].deselect = true;
-    trans[0].nwords = 1;
-    trans[0].txbuffer = tx;
-
-    trans[1].delay = 0;
-    trans[1].deselect = true;
-    trans[1].nwords = 1;
-    trans[1].rxbuffer = buf;
-
-    seq.dev = SPIDEV_USER(0);
-    seq.mode = mode;
-    seq.nbits = 8;
-    seq.ntrans = 2;
-    seq.trans = trans;
-    seq.frequency = 4000000;
-
-    return ioctl(fd, SPIIOC_TRANSFER, &seq);
-}
-
-int I2CWriteSingle(int fd, uint16_t addr, uint8_t regaddr, uint8_t value)
-{
-    struct i2c_msg_s msg[1];
-    struct i2c_transfer_s trans;
-    uint8_t rawbuf[2] = {regaddr, value};
-
-    msg[0].addr = addr;
-    msg[0].flags = 0;
-    msg[0].buffer = rawbuf;
-    msg[0].length = 2;
-    msg[0].frequency = 400000;
-
-    trans.msgv = (struct i2c_msg_s *)msg;
-    trans.msgc = 1;
-
-    return ioctl(fd, I2CIOC_TRANSFER, &trans);
-}
-
-int I2CReadSingle(int fd, uint16_t addr, uint8_t regaddr, uint8_t *buf)
-{
-    struct i2c_msg_s msg[2];
-    struct i2c_transfer_s trans;
-    uint8_t regaddrbuf[1] = {regaddr};
-
-    msg[0].addr = addr;
-    msg[0].flags = 0;
-    msg[0].buffer = regaddrbuf;
-    msg[0].length = 1;
-    msg[0].frequency = 400000;
-
-    msg[1].addr = addr;
-    msg[1].flags = I2C_M_READ;
-    msg[1].buffer = buf;
-    msg[1].length = 1;
-    msg[1].frequency = 400000;
-
-    trans.msgv = (struct i2c_msg_s *)msg;
-    trans.msgc = 2;
-
-    return ioctl(fd, I2CIOC_TRANSFER, &trans);
 }

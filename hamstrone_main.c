@@ -65,7 +65,7 @@ int hamstrone_main(int argc, FAR char *argv[])
         "%s,spi_port,errno=%s=%d",
         HAMSTRONE_CONFIG_SPIPORT1_PATH, strerror(currentErrno), currentErrno);
     return -1;
-  } 
+  }
 
   HAMSTRONE_GLOBAL_MOTOR_PWM = open(HAMSTRONE_CONFIG_TIMER1PWM_PATH, O_RDONLY);
   if (HAMSTRONE_GLOBAL_MOTOR_PWM < 0)
@@ -76,7 +76,7 @@ int hamstrone_main(int argc, FAR char *argv[])
         HAMSTRONE_CONFIG_TIMER1PWM_PATH, strerror(currentErrno), currentErrno);
     return -1;
   }
-  struct pwm_info_s info; 
+  struct pwm_info_s info;
   HAMSTRONE_GLOBAL_MOTOR_PWM_INFO = &info;
   InitMotor(HAMSTRONE_GLOBAL_MOTOR_PWM_INFO);
 
@@ -87,7 +87,7 @@ int hamstrone_main(int argc, FAR char *argv[])
   task_create("tskTransmitValue", 100, 2048, &tskTransmitValue, NULL);
   task_create("tskUpdateValue", 100, 2048, &tskUpdateValue, NULL);
   //task_create("tskParsingGPS", 100, 14336, &tskParsingGPS, NULL);
-  
+
   /* Initialize complete */
   HAMSTERTONGUE_WriteAndFreeMessage(
       HAMSTRONE_GLOBAL_TELEMETRY_PORT,
