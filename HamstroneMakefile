@@ -2,7 +2,8 @@ NPROCS:=1
 NPROCS:=$(shell grep -c ^processor /proc/cpuinfo)
 
 help:
-	@echo 'hamstrone environment makefile'
+	@echo 'hamstrone environment makefile 211116'
+	@echo 'https://github.com/Dictor/hamstrone-drone'
 	@echo 'usage: make [command]'
 	@echo 'command:'
 	@echo '* build: build nuttx binary with hamstrone and included apps'
@@ -13,6 +14,7 @@ help:
 	@echo '* PORT=COMn exe-gnd: execute ground (PORT assigning is necessary!, ex: PORT=COM3 exe-gnd)'
 	@echo '* clean: clean build outputs'
 	@echo '* cnb: execute clean and build'
+	@echo '* update: update all component to latest (It may cause OVERWRITE not committed content! be careful)'
 
 build:
 	@echo 'processor count : $(NPROCS)'
@@ -43,6 +45,13 @@ git-checkout:
 	@cd nuttx && git checkout nuttx
 	@cd ground && git checkout master
 	@cd apps/hamstrone && git checkout master
+
+git-pull:
+	@cd nuttx && git pull --ff-only
+	@cd ground && git pull --ff-only
+	@cd apps/hamstrone && git pull --ff-only
+
+update: git-checkout git-pull apply-config apply-makefile
 
 apply-config:
 	@cp apps/hamstrone/.config nuttx/.config
