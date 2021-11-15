@@ -17,19 +17,16 @@
 #include "serialize.h"
 #include "value_store.h"
 #include "gps.h"
+#include "mpu9250.h"
+#include "sensor.h"
 
 /* Nuttx header */
 #include "nuttx/i2c/i2c_master.h"
 #include "nuttx/spi/spi_transfer.h"
 #include "nuttx/spi/spi.h"
 
-int tskTransmitValue(int argc, char * argv []);
+int tskTransmitValue(int argc, char *argv[]);
 int tskUpdateValue(int argc, char *argv[]);
 int tskParsingGPS(int argc, char *argv[]);
-int SPIReadSingle(int fd, enum spi_mode_e mode, uint8_t regaddr, uint8_t *buf);
-int SPIWriteSingle(int fd, enum spi_mode_e mode, uint8_t regaddr, uint8_t value);
-int I2CWriteSingle(int fd, uint16_t addr, uint8_t regaddr, uint8_t value);
-int I2CReadSingle(int fd, uint16_t addr, uint8_t regaddr, uint8_t *buf);
-int TCA9548SetChannel(int fd, uint8_t chan);
 
 #endif
