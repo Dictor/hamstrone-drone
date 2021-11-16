@@ -1,7 +1,7 @@
 #include "include/task.h"
 #define MAX_SIZE 2
 
-double kP[MAX_SIZE] = {0.408, 0.410};
+double kP[MAX_SIZE] = {0.408, 0.408};
 double kI[MAX_SIZE] = {1.02, 1.02};
 double kD[MAX_SIZE] = {0.0408, 0.0408};
 
