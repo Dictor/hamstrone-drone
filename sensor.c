@@ -53,29 +53,33 @@ int SPIReadSingle(int fd, enum spi_mode_e mode, uint8_t regaddr, uint8_t *val)
     return ret;
 }
 
-int SPIRead(int fd, enum spi_mode_e mode, uint8_t regaddr, uint8_t recieveBytes, uint8_t **val)
+int SPIRead(int fd, enum spi_mode_e mode, uint8_t regaddr, uint8_t recieveBytes, uint8_t *val)
 {
     struct spi_sequence_s seq;
-    struct spi_trans_s trans[2];
-    uint8_t tx[4] = {regaddr, 0, 0, 0};
-    uint8_t rx[4] = {0};
+    struct spi_trans_s trans;
+    uint8_t *tx = malloc(recieveBytes + 1);
+    uint8_t *rx = malloc(recieveBytes + 1);
+    memset(tx, 0, recieveBytes + 1);
+    memset(rx, 0, recieveBytes + 1);
+    tx[0] = regaddr;
 
-    trans[0].delay = 1000;
-    trans[0].deselect = true;
-    trans[0].nwords = recieveBytes;
-    trans[0].txbuffer = tx;
-    trans[0].rxbuffer = rx;
+    trans.delay = 0;
+    trans.deselect = true;
+    trans.nwords = recieveBytes + 1;
+    trans.txbuffer = tx;
+    trans.rxbuffer = rx;
 
     seq.dev = SPIDEV_USER(0);
     seq.mode = mode;
     seq.nbits = 8;
     seq.ntrans = 1;
-    seq.trans = trans;
-    seq.frequency = 100000;
+    seq.trans = &trans;
+    seq.frequency = HAMSTRONE_CONFIG_SPIPORT1_FREQUENCY;
 
     int ret = ioctl(fd, SPIIOC_TRANSFER, (unsigned long)((uintptr_t)&seq));
-    HAMSTERTONGUE_Debugf("rx:[%d %d %d %d]", rx[0], rx[1], rx[2], rx[3]);
-    *val = rx;
+    memcpy(val, rx + 1, sizeof(uint8_t) * recieveBytes);
+    free(tx);
+    free(rx);
     return ret;
 }
 
