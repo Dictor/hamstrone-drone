@@ -71,22 +71,16 @@ int tskUpdateValue(int argc, char *argv[])
 #define MPU6050_REGISTER_CNT 6
 #define SO6203_VALUE_CNT SO6203_REGISTER_CNT *SO6203_COUNT
 #define VALUE_COUNT SO6203_VALUE_CNT + MPU6050_REGISTER_CNT
-#define MPU6050_SPI_MODE SPIDEV_MODE3
 
     const uint8_t devAddr[SO6203_VALUE_CNT] = {
         HAMSTRONE_CONFIG_I2C_ADDRESS_SO6203,
     };
     const uint8_t regAddr[VALUE_COUNT] = {
         HAMSTRONE_CONFIG_SO6203_ADCW_H,
-        MPUREG_ACCEL_XOUT_H,
-        MPUREG_ACCEL_YOUT_H,
-        MPUREG_ACCEL_ZOUT_H,
-        MPUREG_GYRO_XOUT_H,
-        MPUREG_GYRO_YOUT_H,
-        MPUREG_GYRO_ZOUT_H};
+    };
     uint8_t valuel, valueh;
     uint16_t value[VALUE_COUNT];
-    double accelX, accelY, accelZ, gyroX, gyroY, gyroZ;
+    mpu9250Data mpudata;
     double accelXsq, accelYsq, accelZsq, accelAngX, accelAngY;
     double gyroAngX, gyroAngY, gyroAngZ;
     double filterAngX, filterAngY;
@@ -94,14 +88,6 @@ int tskUpdateValue(int argc, char *argv[])
 
     int errcnt;
     /* initialize mpu6050 */
-    uint8_t whoami;
-    SPIReadSingle(HAMSTRONE_GLOBAL_SPI_PORT, MPU6050_SPI_MODE, MPUREG_WHOAMI | READ_FLAG, &whoami);
-    HAMSTERTONGUE_Debugf("mpu whoami: %d", whoami);
-    SPIWriteSingle(HAMSTRONE_GLOBAL_SPI_PORT, MPU6050_SPI_MODE, MPUREG_PWR_MGMT_1, BIT_H_RESET);
-    SPIWriteSingle(HAMSTRONE_GLOBAL_SPI_PORT, MPU6050_SPI_MODE, MPUREG_PWR_MGMT_1, 0x01);
-    SPIWriteSingle(HAMSTRONE_GLOBAL_SPI_PORT, MPU6050_SPI_MODE, MPUREG_PWR_MGMT_2, 0x00);
-    SPIWriteSingle(HAMSTRONE_GLOBAL_SPI_PORT, MPU6050_SPI_MODE, MPUREG_ACCEL_CONFIG, BITS_FS_2G);
-    SPIWriteSingle(HAMSTRONE_GLOBAL_SPI_PORT, MPU6050_SPI_MODE, MPUREG_GYRO_CONFIG, BITS_FS_250DPS);
 
     /* initialize SO6203 */
     /*
@@ -121,6 +107,18 @@ int tskUpdateValue(int argc, char *argv[])
         }
     }
     */
+
+    if (initMPU9250() < 0)
+    {
+        HAMSTERTONGUE_WriteAndFreeMessage(
+            HAMSTRONE_GLOBAL_TELEMETRY_PORT,
+            HAMSTERTONGUE_NewFormatStringMessage(
+                HAMSTERTONGUE_MESSAGE_VERB_SIGNAL,
+                HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_I2CREADFAIL,
+                32,
+                "init mpu"));
+        return;
+    }
 
     while (1)
     {
@@ -158,65 +156,47 @@ int tskUpdateValue(int argc, char *argv[])
         }
         */
 
-        for (int i = SO6203_VALUE_CNT; i < SO6203_VALUE_CNT + MPU6050_REGISTER_CNT; i++)
+        if (readMPU9250(&mpudata) < 0)
         {
-            errcnt = 0;
-            if (SPIReadSingle(HAMSTRONE_GLOBAL_SPI_PORT, MPU6050_SPI_MODE, regAddr[i] | READ_FLAG, &valueh) < 0)
-                errcnt++;
-            if (SPIReadSingle(HAMSTRONE_GLOBAL_SPI_PORT, MPU6050_SPI_MODE, (regAddr[i] + 1) | READ_FLAG, &valuel) < 0)
-                errcnt++;
-            if (errcnt > 0)
-            {
-                HAMSTERTONGUE_WriteAndFreeMessage(
-                    HAMSTRONE_GLOBAL_TELEMETRY_PORT,
-                    HAMSTERTONGUE_NewFormatStringMessage(
-                        HAMSTERTONGUE_MESSAGE_VERB_SIGNAL,
-                        HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_I2CREADFAIL,
-                        32,
-                        "fd=%d errcnt=%d mpu",
-                        HAMSTRONE_GLOBAL_SPI_PORT, errcnt));
-                continue;
-            }
-            value[i] = (valueh << 8) | valuel;
+            HAMSTERTONGUE_WriteAndFreeMessage(
+                HAMSTRONE_GLOBAL_TELEMETRY_PORT,
+                HAMSTERTONGUE_NewFormatStringMessage(
+                    HAMSTERTONGUE_MESSAGE_VERB_SIGNAL,
+                    HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_I2CREADFAIL,
+                    32,
+                    "read mpu"));
         }
 
-        /* calculate gyro and accel angle*/
-
-        accelX = (int16_t)(~value[SO6203_VALUE_CNT] + 1) / HAMSTRONE_CONFIG_MPU6050_ACCEL_COEFFICIENT;
-        accelY = (int16_t)(~value[SO6203_VALUE_CNT + 1] + 1) / HAMSTRONE_CONFIG_MPU6050_ACCEL_COEFFICIENT;
-        accelZ = (int16_t)(~value[SO6203_VALUE_CNT + 2] + 1) / HAMSTRONE_CONFIG_MPU6050_ACCEL_COEFFICIENT;
-        gyroX = (int16_t)(~value[SO6203_VALUE_CNT + 3] + 1) / HAMSTRONE_CONFIG_MPU6050_GYRO_COEFFICIENT;
-        gyroY = (int16_t)(~value[SO6203_VALUE_CNT + 4] + 1) / HAMSTRONE_CONFIG_MPU6050_GYRO_COEFFICIENT;
-        gyroZ = (int16_t)(~value[SO6203_VALUE_CNT + 5] + 1) / HAMSTRONE_CONFIG_MPU6050_GYRO_COEFFICIENT;
-
-        accelXsq = pow(accelX, 2);
-        accelYsq = pow(accelY, 2);
-        accelZsq = pow(accelZ, 2);
-        accelAngX = atan(accelY / sqrt(accelXsq + accelZsq)) * HAMSTRONE_CONFIG_RADIAN_TO_ANGLE;
-        accelAngY = atan(-1 * accelX / sqrt(accelYsq + accelZsq)) * HAMSTRONE_CONFIG_RADIAN_TO_ANGLE;
-        gyroAngX += gyroX * HAMSTRONE_CONFIG_MPU6050_GYRO_TIMEDELTA;
-        gyroAngY += gyroY * HAMSTRONE_CONFIG_MPU6050_GYRO_TIMEDELTA;
-        gyroAngZ += gyroZ * HAMSTRONE_CONFIG_MPU6050_GYRO_TIMEDELTA;
+        accelXsq = pow(mpudata.accX, 2);
+        accelYsq = pow(mpudata.accY, 2);
+        accelZsq = pow(mpudata.accZ, 2);
+        accelAngX = atan(mpudata.accY / sqrt(accelXsq + accelZsq)) * HAMSTRONE_CONFIG_RADIAN_TO_ANGLE;
+        accelAngY = atan(-1 * mpudata.accX / sqrt(accelYsq + accelZsq)) * HAMSTRONE_CONFIG_RADIAN_TO_ANGLE;
+        gyroAngX += mpudata.gyroX * MPU9250_GYRO_TIMEDELTA;
+        gyroAngY += mpudata.gyroY * MPU9250_GYRO_TIMEDELTA;
+        gyroAngZ += mpudata.gyroZ * MPU9250_GYRO_TIMEDELTA;
         filterAngX = accelAngX * HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT + (1 - HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT) * gyroAngX;
         filterAngY = accelAngY * HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT + (1 - HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT) * gyroAngY;
 
-        if (filterAngX >= 10000)
-            filterAngX = 0;
-        if (filterAngY >= 10000)
-            filterAngY = 0;
-
         /* process pid control*/
-        pidControl(filterAngX, filterAngY, pidAssemble);
+
+        //        pidControl(filterAngX, filterAngY, pidAssemble);
 
         HAMSTRONE_WriteValueStore(2, (uint32_t)(filterAngX * 100 + 18000));
         HAMSTRONE_WriteValueStore(3, (uint32_t)(filterAngY * 100 + 18000));
         HAMSTRONE_WriteValueStore(4, (uint32_t)(gyroAngZ * 100 + 18000));
-
+        HAMSTRONE_WriteValueStore(5, (uint32_t)(mpudata.temp * 100 + 10000));
+        /*
+        PWMWriteAll(&HAMSTRONE_GLOBAL_MOTOR_PWM_INFO,
+                    10 * (pidAssemble[0] + pidAssemble[1]) + 200,
+                    10 * (pidAssemble[0] - pidAssemble[1]) + 200,
+                    10 * (-pidAssemble[0] + pidAssemble[1]) + 200,
+                    10 * (-pidAssemble[0] - pidAssemble[1]) + 200);
         HAMSTRONE_WriteValueStore(6, (uint32_t)(10 * (pidAssemble[0] + pidAssemble[1]) + 200));
         HAMSTRONE_WriteValueStore(7, (uint32_t)(10 * (pidAssemble[0] - pidAssemble[1]) + 200));
         HAMSTRONE_WriteValueStore(8, (uint32_t)(10 * (-pidAssemble[0] + pidAssemble[1]) + 200));
         HAMSTRONE_WriteValueStore(9, (uint32_t)(10 * (-pidAssemble[0] - pidAssemble[1]) + 200));
-
+*/
         HAMSTRONE_WriteValueStore(10, (uint32_t)(value[0]));
 
         usleep(period);

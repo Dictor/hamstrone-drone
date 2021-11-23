@@ -20,13 +20,9 @@
 #include "mpu9250.h"
 #include "sensor.h"
 
-/* Nuttx header */
-#include "nuttx/i2c/i2c_master.h"
-#include "nuttx/spi/spi_transfer.h"
-#include "nuttx/spi/spi.h"
-
 int tskTransmitValue(int argc, char *argv[]);
 int tskUpdateValue(int argc, char *argv[]);
 int tskParsingGPS(int argc, char *argv[]);
+#define MPU9250_GYRO_TIMEDELTA 0.004
 
 #endif

@@ -15,7 +15,7 @@
 #include "nuttx/spi/spi.h"
 
 int SPIReadSingle(int fd, enum spi_mode_e mode, uint8_t regaddr, uint8_t *buf);
-int SPIRead(int fd, enum spi_mode_e mode, uint8_t regaddr, uint8_t recieveBytes, uint8_t **val);
+int SPIRead(int fd, enum spi_mode_e mode, uint8_t regaddr, uint8_t recieveBytes, uint8_t *val);
 int SPIWriteSingle(int fd, enum spi_mode_e mode, uint8_t regaddr, uint8_t value);
 int I2CWriteSingle(int fd, uint16_t addr, uint8_t regaddr, uint8_t value);
 int I2CReadSingle(int fd, uint16_t addr, uint8_t regaddr, uint8_t *buf);
