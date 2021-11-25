@@ -16,6 +16,7 @@ int tskTransmitValue(int argc, char *argv[])
 }
 
 #define SO6203_COUNT 0
+#define TFMINI_COUNT 0
 int tskUpdateValue(int argc, char *argv[])
 {
     int period = atoi(argv[1]);
@@ -28,7 +29,7 @@ int tskUpdateValue(int argc, char *argv[])
     mpu9250Data mpudata;
     double angle[3], pidangle[3];
     uint16_t motor[4] = {0, 0, 0, 0};
-    uint16_t bright[SO6203_COUNT];
+    uint16_t bright[SO6203_COUNT], dist[TFMINI_COUNT];
 
     /* initialize SO6203 */
     if (initSO6203() < 0)
@@ -71,7 +72,28 @@ int tskUpdateValue(int argc, char *argv[])
                     16,
                     "read so6203"));
         }
+        for (int i = 0; i < SO6203_COUNT; i++)
+        {
+            HAMSTRONE_WriteValueStore(10 + i, (uint32_t)bright[i]);
+        }
 
+        /* update tfmini sensor value */
+        if (readSO6203(0, TFMINI_COUNT, dist) < 0)
+        {
+            HAMSTERTONGUE_WriteAndFreeMessage(
+                HAMSTRONE_GLOBAL_TELEMETRY_PORT,
+                HAMSTERTONGUE_NewFormatStringMessage(
+                    HAMSTERTONGUE_MESSAGE_VERB_SIGNAL,
+                    HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_SENSORREADFAIL,
+                    16,
+                    "read tfmini"));
+        }
+        for (int i = 0; i < TFMINI_COUNT; i++)
+        {
+            HAMSTRONE_WriteValueStore(10 + TFMINI_COUNT + i, (uint32_t)dist[i]);
+        }
+
+        /* update mpu9250 sensor value */
         if (readMPU9250(&mpudata) < 0)
         {
             HAMSTERTONGUE_WriteAndFreeMessage(

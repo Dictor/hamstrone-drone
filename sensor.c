@@ -83,7 +83,25 @@ int SPIRead(int fd, enum spi_mode_e mode, uint8_t regaddr, uint8_t recieveBytes,
     return ret;
 }
 
-int I2CWriteSingle(int fd, uint16_t addr, uint8_t regaddr, uint8_t value)
+int I2CWriteSingle(int fd, uint16_t addr, uint8_t value)
+{
+    struct i2c_msg_s msg[1];
+    struct i2c_transfer_s trans;
+    uint8_t rawbuf[2] = {value};
+
+    msg[0].addr = addr;
+    msg[0].flags = 0;
+    msg[0].buffer = rawbuf;
+    msg[0].length = 1;
+    msg[0].frequency = 400000;
+
+    trans.msgv = (struct i2c_msg_s *)msg;
+    trans.msgc = 1;
+
+    return ioctl(fd, I2CIOC_TRANSFER, &trans);
+}
+
+int I2CWriteRegisterSingle(int fd, uint16_t addr, uint8_t regaddr, uint8_t value)
 {
     struct i2c_msg_s msg[1];
     struct i2c_transfer_s trans;
@@ -121,6 +139,24 @@ int I2CReadSingle(int fd, uint16_t addr, uint8_t regaddr, uint8_t *buf)
 
     trans.msgv = (struct i2c_msg_s *)msg;
     trans.msgc = 2;
+
+    return ioctl(fd, I2CIOC_TRANSFER, &trans);
+}
+
+int I2CRead(int fd, uint16_t addr, uint8_t length, uint8_t *buf)
+{
+    struct i2c_msg_s msg[1];
+    struct i2c_transfer_s trans;
+    uint8_t rawbuf[2] = {regaddr, value};
+
+    msg[0].addr = addr;
+    msg[0].flags = I2C_M_READ;
+    msg[0].buffer = buf;
+    msg[0].length = length;
+    msg[0].frequency = 400000;
+
+    trans.msgv = (struct i2c_msg_s *)msg;
+    trans.msgc = 1;
 
     return ioctl(fd, I2CIOC_TRANSFER, &trans);
 }

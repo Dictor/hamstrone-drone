@@ -8,5 +8,6 @@
 
 int readSO6203(uint8_t chanStart, uint8_t chanEnd, uint16_t *result);
 int initSO6203(uint8_t chanStart, uint8_t chanEnd);
+int readTFmini(uint8_t chanStart, uint8_t chanEnd, uint16_t *result);
 
 #endif
