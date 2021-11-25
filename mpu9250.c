@@ -5,13 +5,15 @@
 
 #include "include/mpu9250.h"
 
-#define INIT_REGISTER_COUNT 15
+#define INIT_REGISTER_COUNT 17
 uint8_t initRegister[INIT_REGISTER_COUNT][2] = {
     {MPUREG_PWR_MGMT_1, BIT_H_RESET},
     {MPUREG_PWR_MGMT_1, 0x01},
     {MPUREG_PWR_MGMT_2, 0x00},
     {MPUREG_ACCEL_CONFIG, BITS_FS_2G},
+    {MPUREG_ACCEL_CONFIG_2, BITS_DLPF_CFG_10HZ},
     {MPUREG_GYRO_CONFIG, BITS_FS_250DPS},
+    {MPUREG_CONFIG, BITS_DLPF_CFG_10HZ},
     {MPUREG_INT_PIN_CFG, 0x12},
     {MPUREG_USER_CTRL, 0x30},
     {MPUREG_I2C_MST_CTRL, 0x0D},
@@ -104,12 +106,12 @@ int readMPU9250(mpu9250Data *ret)
     value[10] = ((int16_t)data[6] << 8) | data[7];
 
     /* calculate gyro and accel angle*/
-    ret->accX = ((float)value[0] / MPU9250_ACCEL_COEFFICIENT) - accelBias[0];
-    ret->accY = ((float)value[1] / MPU9250_ACCEL_COEFFICIENT) - accelBias[1];
-    ret->accZ = ((float)value[2] / MPU9250_ACCEL_COEFFICIENT) - accelBias[2];
-    ret->gyroX = ((float)value[3] / MPU9250_GYRO_COEFFICIENT) - gyroBias[0];
-    ret->gyroY = ((float)value[4] / MPU9250_GYRO_COEFFICIENT) - gyroBias[1];
-    ret->gyroZ = ((float)value[5] / MPU9250_GYRO_COEFFICIENT) - gyroBias[2];
+    ret->accX = ((float)value[0] / MPU9250_ACCEL_COEFFICIENT); //- accelBias[0];
+    ret->accY = ((float)value[1] / MPU9250_ACCEL_COEFFICIENT); //- accelBias[1];
+    ret->accZ = ((float)value[2] / MPU9250_ACCEL_COEFFICIENT); //- accelBias[2];
+    ret->gyroX = ((float)value[3] / MPU9250_GYRO_COEFFICIENT); //- gyroBias[0];
+    ret->gyroY = ((float)value[4] / MPU9250_GYRO_COEFFICIENT); //- gyroBias[1];
+    ret->gyroZ = ((float)value[5] / MPU9250_GYRO_COEFFICIENT); //- gyroBias[2];
     ret->magX = (float)value[6] * magBias[0];
     ret->magX = (float)value[7] * magBias[1];
     ret->magX = (float)value[8] * magBias[2];

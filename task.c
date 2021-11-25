@@ -1,49 +1,10 @@
 #include "include/task.h"
-#define MAX_SIZE 2
-
-double kP[MAX_SIZE] = {0.408, 0.410};
-double kI[MAX_SIZE] = {1.02, 1.02};
-double kD[MAX_SIZE] = {0.0408, 0.0408};
-
-void pidControl(double AngX, double AngY, double *pidAssemble)
-{
-    double degree[MAX_SIZE] = {
-        0.0,
-    };
-    degree[0] = AngX;
-    degree[1] = AngY;
-
-    static double prevInput[MAX_SIZE] = {
-        0.0,
-    };
-    static double controlI[MAX_SIZE] = {
-        0.0,
-    };
-    double controlP[MAX_SIZE], controlD[MAX_SIZE], dInput[MAX_SIZE], error[MAX_SIZE], desired[MAX_SIZE] = {
-                                                                                          10.0,
-                                                                                      };
-    double time = 0.01;
-    int i;
-
-    for (i = 0; i < 2; i++)
-    {
-        error[i] = desired[i] - degree[i];
-        dInput[i] = degree[i] - prevInput[i];
-        prevInput[i] = degree[i];
-
-        controlP[i] = kP[i] * error[i];
-        controlI[i] = kI[i] * error[i] * time;
-        controlD[i] = -kD[i] * dInput[i] / time;
-
-        pidAssemble[i] = controlP[i] + controlI[i] + controlD[i];
-    }
-}
 
 int tskTransmitValue(int argc, char *argv[])
 {
     int period = atoi(argv[1]);
     if (period <= 0)
-        period = 500000; //500ms
+        period = 100000; //100ms
     HAMSTERTONGUE_Message *msg = HAMSTERTONGUE_NewMessage(HAMSTERTONGUE_MESSAGE_VERB_VALUE, 0, sizeof(HAMSTRONE_CONFIG_VALUE_TYPE) * HAMSTRONE_CONFIG_VALUE_SIZE);
 
     while (1)
@@ -54,59 +15,32 @@ int tskTransmitValue(int argc, char *argv[])
     }
 }
 
+#define SO6203_COUNT 0
 int tskUpdateValue(int argc, char *argv[])
 {
     int period = atoi(argv[1]);
     if (period <= 0)
-        period = 1000; //2ms
+        period = 10000; //2ms
 
     struct timespec startTs, currentTs, taskendTs;
     clock_gettime(CLOCK_MONOTONIC, &startTs);
 
-#define SO6203_CHAN_START 0
-#define SO6203_CHAN_END 0
-#define SO6203_COUNT SO6203_CHAN_END - SO6203_CHAN_START + 1
-/* count of register, one count means set of high and low byte register (2 bytes)   */
-#define SO6203_REGISTER_CNT 1
-#define MPU6050_REGISTER_CNT 6
-#define SO6203_VALUE_CNT SO6203_REGISTER_CNT *SO6203_COUNT
-#define VALUE_COUNT SO6203_VALUE_CNT + MPU6050_REGISTER_CNT
-
-    const uint8_t devAddr[SO6203_VALUE_CNT] = {
-        HAMSTRONE_CONFIG_I2C_ADDRESS_SO6203,
-    };
-    const uint8_t regAddr[VALUE_COUNT] = {
-        HAMSTRONE_CONFIG_SO6203_ADCW_H,
-    };
-    uint8_t valuel, valueh;
-    uint16_t value[VALUE_COUNT];
     mpu9250Data mpudata;
-    double accelXsq, accelYsq, accelZsq, accelAngX, accelAngY;
-    double gyroAngX, gyroAngY, gyroAngZ;
-    double filterAngX, filterAngY;
-    double pidAssemble[MAX_SIZE];
-
-    int errcnt;
-    /* initialize mpu6050 */
+    double angle[3], pidangle[3];
+    uint16_t motor[4] = {0, 0, 0, 0};
+    uint16_t bright[SO6203_COUNT];
 
     /* initialize SO6203 */
-    /*
-    for (int c = SO6203_CHAN_START; c <= SO6203_CHAN_END; c++)
+    if (initSO6203() < 0)
     {
-        TCA9548SetChannel(HAMSTRONE_GLOBAL_I2C_PORT, c);
-        if (I2CWriteSingle(HAMSTRONE_GLOBAL_I2C_PORT, HAMSTRONE_CONFIG_I2C_ADDRESS_SO6203, HAMSTRONE_CONFIG_SO6203_EN, 0b00001011) < 0)
-        {
-            HAMSTERTONGUE_WriteAndFreeMessage(
-                HAMSTRONE_GLOBAL_TELEMETRY_PORT,
-                HAMSTERTONGUE_NewFormatStringMessage(
-                    HAMSTERTONGUE_MESSAGE_VERB_SIGNAL,
-                    HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_I2CREADFAIL,
-                    24,
-                    "fd=%d chan=%d so6203 en",
-                    HAMSTRONE_GLOBAL_I2C_PORT, c));
-        }
+        HAMSTERTONGUE_WriteAndFreeMessage(
+            HAMSTRONE_GLOBAL_TELEMETRY_PORT,
+            HAMSTERTONGUE_NewFormatStringMessage(
+                HAMSTERTONGUE_MESSAGE_VERB_SIGNAL,
+                HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_SENSORINITFAIL,
+                32,
+                "init so6203"));
     }
-    */
 
     if (initMPU9250() < 0)
     {
@@ -114,9 +48,9 @@ int tskUpdateValue(int argc, char *argv[])
             HAMSTRONE_GLOBAL_TELEMETRY_PORT,
             HAMSTERTONGUE_NewFormatStringMessage(
                 HAMSTERTONGUE_MESSAGE_VERB_SIGNAL,
-                HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_I2CREADFAIL,
-                32,
-                "init mpu"));
+                HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_SENSORINITFAIL,
+                16,
+                "init mpu9250"));
         return;
     }
 
@@ -127,34 +61,16 @@ int tskUpdateValue(int argc, char *argv[])
         HAMSTRONE_WriteValueStore(0, (uint32_t)(currentTs.tv_sec - startTs.tv_sec));
 
         /* update so6203 sensor value */
-        /*
-        for (int c = SO6203_CHAN_START; c <= SO6203_CHAN_END; c++)
+        if (readSO6203(0, SO6203_COUNT, bright) < 0)
         {
-            for (int i = 0; i < SO6203_REGISTER_CNT; i++)
-            {
-                errcnt = 0;
-                if (TCA9548SetChannel(HAMSTRONE_GLOBAL_I2C_PORT, c) < 0)
-                    errcnt++;
-                if (I2CReadSingle(HAMSTRONE_GLOBAL_I2C_PORT, devAddr[c + i], regAddr[c + i], &valueh) < 0)
-                    errcnt++;
-                if (I2CReadSingle(HAMSTRONE_GLOBAL_I2C_PORT, devAddr[c + i], regAddr[c + i] + 1, &valuel) < 0)
-                    errcnt++;
-                if (errcnt > 0)
-                {
-                    HAMSTERTONGUE_WriteAndFreeMessage(
-                        HAMSTRONE_GLOBAL_TELEMETRY_PORT,
-                        HAMSTERTONGUE_NewFormatStringMessage(
-                            HAMSTERTONGUE_MESSAGE_VERB_SIGNAL,
-                            HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_I2CREADFAIL,
-                            32,
-                            "fd=%d dev=%d errcnt=%d so6203",
-                            HAMSTRONE_GLOBAL_I2C_PORT, devAddr[i], errcnt));
-                    continue;
-                }
-                value[c + i] = (valueh << 8) | valuel;
-            }
+            HAMSTERTONGUE_WriteAndFreeMessage(
+                HAMSTRONE_GLOBAL_TELEMETRY_PORT,
+                HAMSTERTONGUE_NewFormatStringMessage(
+                    HAMSTERTONGUE_MESSAGE_VERB_SIGNAL,
+                    HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_SENSORREADFAIL,
+                    16,
+                    "read so6203"));
         }
-        */
 
         if (readMPU9250(&mpudata) < 0)
         {
@@ -162,42 +78,31 @@ int tskUpdateValue(int argc, char *argv[])
                 HAMSTRONE_GLOBAL_TELEMETRY_PORT,
                 HAMSTERTONGUE_NewFormatStringMessage(
                     HAMSTERTONGUE_MESSAGE_VERB_SIGNAL,
-                    HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_I2CREADFAIL,
-                    32,
-                    "read mpu"));
+                    HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_SENSORREADFAIL,
+                    16,
+                    "read mpu9250"));
         }
 
-        accelXsq = pow(mpudata.accX, 2);
-        accelYsq = pow(mpudata.accY, 2);
-        accelZsq = pow(mpudata.accZ, 2);
-        accelAngX = atan(mpudata.accY / sqrt(accelXsq + accelZsq)) * HAMSTRONE_CONFIG_RADIAN_TO_ANGLE;
-        accelAngY = atan(-1 * mpudata.accX / sqrt(accelYsq + accelZsq)) * HAMSTRONE_CONFIG_RADIAN_TO_ANGLE;
-        gyroAngX += mpudata.gyroX * MPU9250_GYRO_TIMEDELTA;
-        gyroAngY += mpudata.gyroY * MPU9250_GYRO_TIMEDELTA;
-        gyroAngZ += mpudata.gyroZ * MPU9250_GYRO_TIMEDELTA;
-        filterAngX = accelAngX * HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT + (1 - HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT) * gyroAngX;
-        filterAngY = accelAngY * HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT + (1 - HAMSTRONE_CONFIG_COMPLEMENTARY_FILTER_COEFFICIENT) * gyroAngY;
+        /* calculate posture */
+        updateKalman(&mpudata, angle);
+        //updateComplimentary(&mpudata, angle);
+        HAMSTRONE_WriteValueStore(2, (uint32_t)(angle[0] * 100 + 18000));
+        HAMSTRONE_WriteValueStore(3, (uint32_t)(angle[1] * 100 + 18000));
+        HAMSTRONE_WriteValueStore(4, (uint32_t)(angle[2] * 100 + 18000));
+        HAMSTRONE_WriteValueStore(5, (uint32_t)(mpudata.temp * 100 + 10000));
 
         /* process pid control*/
+        updatePID(angle[0], angle[1], pidangle);
+        motor[0] = 2 * (pidangle[0] + pidangle[1]) + 150;
+        motor[1] = 2 * (pidangle[0] - pidangle[1]) + 150;
+        motor[2] = 2 * (-pidangle[0] + pidangle[1]) + 150;
+        motor[3] = 2 * (-pidangle[0] - pidangle[1]) + 150;
 
-        //        pidControl(filterAngX, filterAngY, pidAssemble);
-
-        HAMSTRONE_WriteValueStore(2, (uint32_t)(filterAngX * 100 + 18000));
-        HAMSTRONE_WriteValueStore(3, (uint32_t)(filterAngY * 100 + 18000));
-        HAMSTRONE_WriteValueStore(4, (uint32_t)(gyroAngZ * 100 + 18000));
-        HAMSTRONE_WriteValueStore(5, (uint32_t)(mpudata.temp * 100 + 10000));
-        /*
-        PWMWriteAll(&HAMSTRONE_GLOBAL_MOTOR_PWM_INFO,
-                    10 * (pidAssemble[0] + pidAssemble[1]) + 200,
-                    10 * (pidAssemble[0] - pidAssemble[1]) + 200,
-                    10 * (-pidAssemble[0] + pidAssemble[1]) + 200,
-                    10 * (-pidAssemble[0] - pidAssemble[1]) + 200);
-        HAMSTRONE_WriteValueStore(6, (uint32_t)(10 * (pidAssemble[0] + pidAssemble[1]) + 200));
-        HAMSTRONE_WriteValueStore(7, (uint32_t)(10 * (pidAssemble[0] - pidAssemble[1]) + 200));
-        HAMSTRONE_WriteValueStore(8, (uint32_t)(10 * (-pidAssemble[0] + pidAssemble[1]) + 200));
-        HAMSTRONE_WriteValueStore(9, (uint32_t)(10 * (-pidAssemble[0] - pidAssemble[1]) + 200));
-*/
-        HAMSTRONE_WriteValueStore(10, (uint32_t)(value[0]));
+        PWMWriteAll(HAMSTRONE_GLOBAL_MOTOR_PWM_INFO, motor[0], motor[1], motor[2], motor[3]);
+        HAMSTRONE_WriteValueStore(6, (uint32_t)motor[0]);
+        HAMSTRONE_WriteValueStore(7, (uint32_t)motor[1]);
+        HAMSTRONE_WriteValueStore(8, (uint32_t)motor[2]);
+        HAMSTRONE_WriteValueStore(9, (uint32_t)motor[3]);
 
         usleep(period);
         clock_gettime(CLOCK_MONOTONIC, &taskendTs);

@@ -19,10 +19,11 @@
 #include "gps.h"
 #include "mpu9250.h"
 #include "sensor.h"
+#include "control.h"
+#include "bright_dist_sensor.h"
 
 int tskTransmitValue(int argc, char *argv[]);
 int tskUpdateValue(int argc, char *argv[]);
 int tskParsingGPS(int argc, char *argv[]);
-#define MPU9250_GYRO_TIMEDELTA 0.004
 
 #endif

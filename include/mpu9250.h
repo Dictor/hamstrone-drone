@@ -1,6 +1,15 @@
 #ifndef HAMSTRONE_MPU9250_H
 #define HAMSTRONE_MPU9250_H
 
+// typedef on first for include order issue
+typedef struct _mpu9250Data
+{
+    float accX, accY, accZ;
+    float gyroX, gyroY, gyroZ;
+    float magX, magY, magZ;
+    float temp;
+} mpu9250Data;
+
 #include "mpu9250_register.h"
 #include "hamster_tongue.h"
 #include "sensor.h"
@@ -21,14 +30,6 @@
 #else
 #define mpudebug(...)
 #endif
-
-typedef struct _mpu9250Data
-{
-    float accX, accY, accZ;
-    float gyroX, gyroY, gyroZ;
-    float magX, magY, magZ;
-    float temp;
-} mpu9250Data;
 
 void calibrateMPU9250(float *dest1, float *dest2);
 int readMPU9250(mpu9250Data *data);
