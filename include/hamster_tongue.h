@@ -60,4 +60,6 @@ uint8_t *HAMSTERTONGUE_SerializeMessage(HAMSTERTONGUE_Message *msg);
 ssize_t HAMSTERTONGUE_WriteMessage(int fd, HAMSTERTONGUE_Message *msg);
 ssize_t HAMSTERTONGUE_WriteAndFreeMessage(int fd, HAMSTERTONGUE_Message *msg);
 ssize_t HAMSTERTONGUE_Debugf(char *format, ...);
+ssize_t HAMSTERTONGUE_Read(int fd, uint8_t *buf, uint8_t bufsize);
+HAMSTERTONGUE_Message *HAMSTERTONGUE_ReadMessage(int fd);
 #endif
