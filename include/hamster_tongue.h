@@ -24,8 +24,11 @@
 /* MESSAGE NOUN */
 #define HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_INITOK 0x00
 #define HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_INITFAIL 0x01
-#define HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_I2CREADFAIL 0x02
 #define HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_DEBUG 0x03
+#define HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_I2CREADFAIL 0x03
+#define HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_SPIREADFAIL 0x04
+#define HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_SENSORINITFAIL 0x05
+#define HAMSTERTONGUE_MESSAGE_NOUN_SIGNAL_SENSORREADFAIL 0x06
 
 #define HAMSTERTONGUE_GENERAL_BUFFER_MULTIPLY 20
 
@@ -37,23 +40,24 @@ Size(byte)  1       1       1       1       ~255        1
                             <-      Length              ->
 */
 
-typedef struct _HAMSTERTONGUE_Message {
+typedef struct _HAMSTERTONGUE_Message
+{
     uint8_t Verb;
     uint8_t Noun;
-    uint8_t* Payload;
+    uint8_t *Payload;
     uint8_t PayloadLength;
 } HAMSTERTONGUE_Message;
 
 //sem_t* WriteSemaphore;
 
-void HAMSTERTONGUE_SetWriteSemaphore(sem_t* sem);
+void HAMSTERTONGUE_SetWriteSemaphore(sem_t *sem);
 void HAMSTERTONGUE_SetDefaultFile(int fd);
-HAMSTERTONGUE_Message* HAMSTERTONGUE_NewMessage(uint8_t verb, uint8_t noun, uint8_t payloadLength);
-HAMSTERTONGUE_Message* HAMSTERTONGUE_NewStringMessage(uint8_t verb, uint8_t noun, char* str);
-HAMSTERTONGUE_Message* HAMSTERTONGUE_NewFormatStringMessage(uint8_t verb, uint8_t noun, int bufSize, char* format, ...);
-uint16_t HAMSTERTONGUE_GetMessageLength(HAMSTERTONGUE_Message* msg);
-uint8_t* HAMSTERTONGUE_SerializeMessage(HAMSTERTONGUE_Message* msg);
-ssize_t HAMSTERTONGUE_WriteMessage(int fd, HAMSTERTONGUE_Message* msg);
-ssize_t HAMSTERTONGUE_WriteAndFreeMessage(int fd, HAMSTERTONGUE_Message* msg);
+HAMSTERTONGUE_Message *HAMSTERTONGUE_NewMessage(uint8_t verb, uint8_t noun, uint8_t payloadLength);
+HAMSTERTONGUE_Message *HAMSTERTONGUE_NewStringMessage(uint8_t verb, uint8_t noun, char *str);
+HAMSTERTONGUE_Message *HAMSTERTONGUE_NewFormatStringMessage(uint8_t verb, uint8_t noun, int bufSize, char *format, ...);
+uint16_t HAMSTERTONGUE_GetMessageLength(HAMSTERTONGUE_Message *msg);
+uint8_t *HAMSTERTONGUE_SerializeMessage(HAMSTERTONGUE_Message *msg);
+ssize_t HAMSTERTONGUE_WriteMessage(int fd, HAMSTERTONGUE_Message *msg);
+ssize_t HAMSTERTONGUE_WriteAndFreeMessage(int fd, HAMSTERTONGUE_Message *msg);
 ssize_t HAMSTERTONGUE_Debugf(char *format, ...);
 #endif
