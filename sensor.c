@@ -2,7 +2,7 @@
 
 int TCA9548SetChannel(int fd, uint8_t chan)
 {
-    return I2CWriteSingle(fd, HAMSTRONE_CONFIG_I2C_ADDRESS_TCA9548, HAMSTRONE_CONFIG_TCA9548_CHAN, 1 << chan);
+    return I2CWriteRegisterSingle(fd, HAMSTRONE_CONFIG_I2C_ADDRESS_TCA9548, HAMSTRONE_CONFIG_TCA9548_CHAN, 1 << chan);
 }
 
 int SPIWriteSingle(int fd, enum spi_mode_e mode, uint8_t regaddr, uint8_t value)
@@ -147,7 +147,6 @@ int I2CRead(int fd, uint16_t addr, uint8_t length, uint8_t *buf)
 {
     struct i2c_msg_s msg[1];
     struct i2c_transfer_s trans;
-    uint8_t rawbuf[2] = {regaddr, value};
 
     msg[0].addr = addr;
     msg[0].flags = I2C_M_READ;

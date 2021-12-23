@@ -32,7 +32,7 @@ int tskUpdateValue(int argc, char *argv[])
     uint16_t bright[SO6203_COUNT], dist[TFMINI_COUNT];
 
     /* initialize SO6203 */
-    if (initSO6203() < 0)
+    if (initSO6203(0, 0 + SO6203_COUNT) < 0)
     {
         HAMSTERTONGUE_WriteAndFreeMessage(
             HAMSTRONE_GLOBAL_TELEMETRY_PORT,
@@ -115,10 +115,10 @@ int tskUpdateValue(int argc, char *argv[])
 
         /* process pid control*/
         updatePID(angle[0], angle[1], pidangle);
-        motor[0] = 2 * (pidangle[0] + pidangle[1]) + 150;
-        motor[1] = 2 * (pidangle[0] - pidangle[1]) + 150;
-        motor[2] = 2 * (-pidangle[0] + pidangle[1]) + 150;
-        motor[3] = 2 * (-pidangle[0] - pidangle[1]) + 150;
+        motor[0] = 2 * (pidangle[0] + pidangle[1]) + 100;
+        motor[1] = 2 * (pidangle[0] - pidangle[1]) + 100;
+        motor[2] = 2 * (-pidangle[0] + pidangle[1]) + 100;
+        motor[3] = 2 * (-pidangle[0] - pidangle[1]) + 100;
 
         PWMWriteAll(HAMSTRONE_GLOBAL_MOTOR_PWM_INFO, motor[0], motor[1], motor[2], motor[3]);
         HAMSTRONE_WriteValueStore(6, (uint32_t)motor[0]);
