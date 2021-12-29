@@ -80,6 +80,8 @@ int hamstrone_main(int argc, FAR char *argv[])
   HAMSTRONE_GLOBAL_MOTOR_PWM_INFO = &info;
   InitMotor(HAMSTRONE_GLOBAL_MOTOR_PWM_INFO);
 
+  tf_rt_initialize_context(NULL, NULL, 128);
+
   /* Initialize telemetry value store */
   HAMSTRONE_InitValueStore(HAMSTRONE_CONFIG_VALUE_SIZE);
 
